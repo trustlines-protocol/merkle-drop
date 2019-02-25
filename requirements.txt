@@ -1,0 +1,8 @@
+web3
+pytest
+flake8
+pep8-naming
+eth-utils
+contract-deploy-tools>=0.2.0
+black
+pre-commit
