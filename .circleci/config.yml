@@ -81,10 +81,19 @@ jobs:
           key: venv-{{ checksum "constraints.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - venv
+      - run:
+          name: Install package
+          command: |
+            pip install -c constraints.txt -e .
+      - run:
+          name: Verify installed packages have compatible dependencies
+          command: |
+            pip check
       - persist_to_workspace:
           root: "~"
           paths:
             - repo
+
   run-pytest:
     executor: ubuntu-builder
     steps:

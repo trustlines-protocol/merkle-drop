@@ -37,11 +37,14 @@ class Node:
         return f"Node({self.hash!r}, {self.parent!r}, {self.left_child!r}, {self.right_child!r})"
 
 
-def compute_merkle_root(values: List):
-    return build_tree(values).root
+def compute_merkle_root(airdrop_list: list):
+
+    return build_tree(airdrop_list).root.hash
 
 
 def build_tree(values: List) -> Tree:
+
+    values.sort()
 
     current_nodes = leaves = _build_leaves(values)
     next_nodes = []
