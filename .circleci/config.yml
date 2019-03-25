@@ -105,12 +105,16 @@ jobs:
           at: '~'
       - config-path
       - run:
+          name: Create test-reports folder
+          command: mkdir test-reports
+      - run:
           name: Run pytest
-          command: pytest --cov merkle_drop tests/
+          command: pytest --cov merkle_drop --junitxml=test-reports/junit.xml tests/
       - run:
           name: Upload coverage report
           command: codecov
-
+      - store_test_results:
+          path: test-reports
 
   run-mypy:
     executor: ubuntu-builder
