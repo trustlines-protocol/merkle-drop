@@ -1,13 +1,12 @@
-#! /usr/bin/env python
-from typing import List
+from typing import List, Optional
 import hashlib
 
 
 def sha(*args) -> bytes:
     m = hashlib.sha256()
-    args = list(args)
-    args.sort()
-    for arg in args:
+    sorted_args = list(args)
+    sorted_args.sort()
+    for arg in sorted_args:
         if not isinstance(arg, bytes):
             arg = arg.to_bytes(4, byteorder="big")
         m.update(arg)
@@ -74,7 +73,7 @@ def _build_leaves(values: List) -> List[Node]:
     return [Node(sha(value)) for value in values]
 
 
-def in_tree(value, root: Node) -> bool:
+def in_tree(value, root: Optional[Node]) -> bool:
 
     if root is None:
         return False
@@ -98,8 +97,14 @@ def create_proof(value, tree: Tree):
         parent = leave.parent
 
         if parent.left_child == leave:
+            if parent.right_child is None:
+                raise RuntimeError("Child should not be None in tree")
+
             proof.append(parent.right_child.hash)
         elif parent.right_child == leave:
+            if parent.left_child is None:
+                raise RuntimeError("Child should not be None in tree")
+
             proof.append(parent.left_child.hash)
         else:
             raise RuntimeError("wrong leave")
@@ -117,26 +122,3 @@ def validate_proof(value, proof: List[bytes], root_hash: bytes):
         hash = sha(hash, h)
 
     return hash == root_hash
-
-
-a = [1, 2, 3, 4, 5]
-
-
-def test_in_tree():
-    tree = build_tree(a)
-
-    assert all(in_tree(v, tree.root) for v in a)
-    assert not in_tree(6, tree.root)
-
-
-def test_proof():
-
-    tree = build_tree(a)
-    proofs = [create_proof(v, tree) for v in a]
-
-    assert validate_proof(1, proofs[0], tree.root.hash)
-    assert validate_proof(5, proofs[4], tree.root.hash)
-
-    assert all(validate_proof(v, proof, tree.root.hash) for v, proof in zip(a, proofs))
-    assert not validate_proof(1, proofs[4], tree.root.hash)
-    assert not validate_proof(1, [], tree.root.hash)
