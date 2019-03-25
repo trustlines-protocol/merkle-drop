@@ -104,6 +104,18 @@ jobs:
           name: Run pytest
           command: pytest tests/
 
+
+  run-mypy:
+    executor: ubuntu-builder
+    steps:
+      - attach_workspace:
+          at: '~'
+      - config-path
+      - run:
+          name: Run mypy
+          command: |
+            mypy --ignore-missing-imports merkle_drop tests
+
 workflows:
   version: 2
   default:
@@ -117,5 +129,8 @@ workflows:
           requires:
             - install
       - run-pytest:
+          requires:
+            - install
+      - run-mypy:
           requires:
             - install
