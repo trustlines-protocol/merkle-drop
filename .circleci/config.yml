@@ -74,6 +74,10 @@ jobs:
           key: venv-{{ checksum "constraints.txt" }}-{{ checksum "requirements.txt" }}
       - create-venv
       - run:
+          name: Install codecov
+          command: |
+            pip install -c constraints.txt codecov
+      - run:
           name: Install requirements
           command: |
             pip install -c constraints.txt -r requirements.txt
@@ -102,7 +106,10 @@ jobs:
       - config-path
       - run:
           name: Run pytest
-          command: pytest tests/
+          command: pytest --cov merkle_drop tests/
+      - run:
+          name: Upload coverage report
+          command: codecov
 
 
   run-mypy:
