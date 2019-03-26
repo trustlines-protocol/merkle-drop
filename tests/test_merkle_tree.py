@@ -1,6 +1,14 @@
 import pytest
 
-from merkle_drop.merkle_tree import build_tree, in_tree, create_proof, validate_proof
+from eth_utils import keccak
+
+from merkle_drop.merkle_tree import (
+    build_tree,
+    in_tree,
+    create_proof,
+    validate_proof,
+    compute_parent_hash,
+)
 
 
 @pytest.fixture
@@ -11,6 +19,14 @@ def tree_data():
 @pytest.fixture
 def other_data():
     return [6, 7]
+
+
+@pytest.mark.parametrize(
+    ("left_hash", "right_hash", "parent_hash"),
+    ((b"\xaa", b"\xbb", keccak(b"\xaa\xbb")), (b"\xbb", b"\xaa", keccak(b"\xaa\xbb"))),
+)
+def test_parent_hash(left_hash, right_hash, parent_hash):
+    assert compute_parent_hash(left_hash, right_hash) == parent_hash
 
 
 def test_in_tree(tree_data):
