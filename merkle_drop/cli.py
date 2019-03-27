@@ -1,6 +1,6 @@
 import click
 
-from .load_json import load_airdrop_dict
+from .load_csv import load_airdrop_dict
 from .merkle_tree import compute_merkle_root
 
 
