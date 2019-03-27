@@ -64,7 +64,7 @@ def _build_leaves(values: List) -> List[Node]:
     return [Node(keccak(value)) for value in values]
 
 
-def compute_parent_hash(left_hash: Node, right_hash: Node) -> bytes:
+def compute_parent_hash(left_hash: bytes, right_hash: bytes) -> bytes:
     little_child_hash, big_child_hash = sorted((left_hash, right_hash))
     return keccak(little_child_hash + big_child_hash)
 
