@@ -5,7 +5,7 @@ from eth_utils import is_checksum_address, to_canonical_address
 def load_airdrop_dict(airdrop_file: str):
     with open(airdrop_file) as file:
         reader = csv.reader(file)
-        address_value_pairs = tuple(reader)
+        address_value_pairs = list(reader)
 
     validate_address_value_pairs(address_value_pairs)
     return {
