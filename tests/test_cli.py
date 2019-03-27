@@ -9,6 +9,7 @@ from merkle_drop.cli import main
 
 A_ADDRESS = b"\xaa" * 20
 B_ADDRESS = b"\xbb" * 20
+C_ADDRESS = b"\xcc" * 20
 
 
 AIRDROP_DATA = {A_ADDRESS: 10, B_ADDRESS: 20}
@@ -39,6 +40,7 @@ def test_merkle_root_cli(runner, airdrop_list_file):
 
     result = runner.invoke(main, ["root", str(airdrop_list_file)])
     assert result.exit_code == 0
+    assert result.output.startswith("0x")
 
 
 def test_read_csv_file(airdrop_list_file):
@@ -78,3 +80,21 @@ def test_valid_airdrop_file_validation(address_value_pairs):
 def test_invalid_airdrop_file_validation(address_value_pairs):
     with pytest.raises(ValueError):
         validate_address_value_pairs(address_value_pairs)
+
+
+def test_merkle_balance_cli(runner, airdrop_list_file):
+
+    result = runner.invoke(
+        main, ["balance", to_checksum_address(A_ADDRESS), str(airdrop_list_file)]
+    )
+    assert result.exit_code == 0
+    assert int(result.output) == AIRDROP_DATA[A_ADDRESS]
+
+
+def test_merkle_not_existing_balance_cli(runner, airdrop_list_file):
+
+    result = runner.invoke(
+        main, ["balance", to_checksum_address(C_ADDRESS), str(airdrop_list_file)]
+    )
+    assert result.exit_code == 0
+    assert int(result.output) == 0
