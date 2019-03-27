@@ -1,5 +1,11 @@
-from typing import Dict, List, Optional
+from typing import NamedTuple
+from typing import List, Optional
 from eth_utils import keccak, is_canonical_address
+
+
+class Item(NamedTuple):
+    address: bytes
+    value: int
 
 
 class Tree:
@@ -12,6 +18,7 @@ class Node:
     def __init__(
         self,
         hash: bytes,
+        *,
         parent: "Node" = None,
         left_child: "Node" = None,
         right_child: "Node" = None,
@@ -25,14 +32,14 @@ class Node:
         return f"Node({self.hash!r}, {self.parent!r}, {self.left_child!r}, {self.right_child!r})"
 
 
-def compute_merkle_root(address_value_dict: Dict[bytes, int]) -> bytes:
+def compute_merkle_root(items: List[Item]):
 
-    return build_tree(address_value_dict).root.hash
+    return build_tree(items).root.hash
 
 
-def build_tree(address_value_dict: Dict[bytes, int]) -> Tree:
+def build_tree(items: List[Item]) -> Tree:
 
-    current_nodes = leaves = _build_leaves(address_value_dict)
+    current_nodes = leaves = _build_leaves(items)
     next_nodes = []
 
     while len(current_nodes) > 1:
@@ -58,7 +65,8 @@ def build_tree(address_value_dict: Dict[bytes, int]) -> Tree:
     return tree
 
 
-def compute_leaf_hash(address: bytes, value: int) -> bytes:
+def compute_leaf_hash(item: Item) -> bytes:
+    address, value = item
     if not is_canonical_address(address):
         raise ValueError("Address must be a canonical address")
 
@@ -68,12 +76,9 @@ def compute_leaf_hash(address: bytes, value: int) -> bytes:
     return keccak(address + value.to_bytes(32, "big"))
 
 
-def _build_leaves(address_value_dict: Dict[bytes, int]) -> List[Node]:
-    sorted_addresses = sorted(address_value_dict.keys())
-    hashes = [
-        compute_leaf_hash(address, address_value_dict[address])
-        for address in sorted_addresses
-    ]
+def _build_leaves(items: List[Item]) -> List[Node]:
+    sorted_items = sorted(items)
+    hashes = [compute_leaf_hash(item) for item in sorted_items]
     return [Node(h) for h in hashes]
 
 
@@ -82,22 +87,20 @@ def compute_parent_hash(left_hash: bytes, right_hash: bytes) -> bytes:
     return keccak(little_child_hash + big_child_hash)
 
 
-def in_tree(address: bytes, value: int, root: Optional[Node]) -> bool:
+def in_tree(item: Item, root: Optional[Node]) -> bool:
 
     if root is None:
         return False
 
-    if root.hash == compute_leaf_hash(address, value):
+    if root.hash == compute_leaf_hash(item):
         return True
 
-    return in_tree(address, value, root.left_child) or in_tree(
-        address, value, root.right_child
-    )
+    return in_tree(item, root.left_child) or in_tree(item, root.right_child)
 
 
-def create_proof(address: bytes, value: int, tree: Tree):
+def create_proof(item: Item, tree: Tree):
 
-    leaf_hash = compute_leaf_hash(address, value)
+    leaf_hash = compute_leaf_hash(item)
     leaf = next((leave for leave in tree.leaves if leave.hash == leaf_hash), None)
 
     proof = []
@@ -126,9 +129,9 @@ def create_proof(address: bytes, value: int, tree: Tree):
     return proof
 
 
-def validate_proof(address: bytes, value: int, proof: List[bytes], root_hash: bytes):
+def validate_proof(item: Item, proof: List[bytes], root_hash: bytes):
 
-    hash = compute_leaf_hash(address, value)
+    hash = compute_leaf_hash(item)
 
     for h in proof:
         hash = compute_parent_hash(hash, h)

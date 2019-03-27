@@ -1,8 +1,9 @@
+from typing import Dict
 import csv
 from eth_utils import is_checksum_address, to_canonical_address
 
 
-def load_airdrop_dict(airdrop_file: str):
+def load_airdrop_file(airdrop_file: str) -> Dict[bytes, int]:
     with open(airdrop_file) as file:
         reader = csv.reader(file)
         address_value_pairs = list(reader)
