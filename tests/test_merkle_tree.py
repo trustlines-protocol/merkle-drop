@@ -23,7 +23,7 @@ def other_data():
 
 @pytest.mark.parametrize(
     ("left_hash", "right_hash", "parent_hash"),
-    ((b"\xaa", b"\xbb", keccak(b"\xaa\xbb")), (b"\xbb", b"\xaa", keccak(b"\xaa\xbb"))),
+    [(b"\xaa", b"\xbb", keccak(b"\xaa\xbb")), (b"\xbb", b"\xaa", keccak(b"\xaa\xbb"))],
 )
 def test_parent_hash(left_hash, right_hash, parent_hash):
     assert compute_parent_hash(left_hash, right_hash) == parent_hash
