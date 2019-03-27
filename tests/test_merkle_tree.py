@@ -10,23 +10,24 @@ from merkle_drop.merkle_tree import (
     compute_parent_hash,
     compute_leaf_hash,
     compute_merkle_root,
+    Item,
 )
 
 
 @pytest.fixture
 def tree_data():
-    return {
-        b"\xaa" * 20: 1,
-        b"\xbb" * 20: 2,
-        b"\xcc" * 20: 3,
-        b"\xdd" * 20: 4,
-        b"\xee" * 20: 5,
-    }
+    return [
+        Item(b"\xaa" * 20, 1),
+        Item(b"\xbb" * 20, 2),
+        Item(b"\xcc" * 20, 3),
+        Item(b"\xdd" * 20, 4),
+        Item(b"\xee" * 20, 5),
+    ]
 
 
 @pytest.fixture
 def other_data():
-    return {b"\xff" * 20: 6, b"\x00" * 20: 7}
+    return [Item(b"\xff" * 20, 6), Item(b"\x00" * 20, 7)]
 
 
 @pytest.mark.parametrize(
@@ -38,77 +39,67 @@ def test_parent_hash(left_hash, right_hash, parent_hash):
 
 
 @pytest.mark.parametrize(
-    ("address", "value", "leaf_hash"),
+    ("item", "leaf_hash"),
     (
-        (b"\xaa" * 20, 1, keccak(b"\xaa" * 20 + b"\x00" * 31 + b"\x01")),
-        (b"\xbb" * 20, 255, keccak(b"\xbb" * 20 + b"\x00" * 31 + b"\xff")),
-        (b"\xcc" * 20, 256, keccak(b"\xcc" * 20 + b"\x00" * 30 + b"\x01\x00")),
+        (Item(b"\xaa" * 20, 1), keccak(b"\xaa" * 20 + b"\x00" * 31 + b"\x01")),
+        (Item(b"\xbb" * 20, 255), keccak(b"\xbb" * 20 + b"\x00" * 31 + b"\xff")),
+        (Item(b"\xcc" * 20, 256), keccak(b"\xcc" * 20 + b"\x00" * 30 + b"\x01\x00")),
     ),
 )
-def test_leaf_hash(address, value, leaf_hash):
-    assert compute_leaf_hash(address, value) == leaf_hash
+def test_leaf_hash(item, leaf_hash):
+    assert compute_leaf_hash(item) == leaf_hash
 
 
 def test_in_tree(tree_data):
     tree = build_tree(tree_data)
 
-    assert all(
-        in_tree(address, value, tree.root) for address, value in tree_data.items()
-    )
+    assert all(in_tree(item, tree.root) for item in tree_data)
 
 
 def test_not_in_tree(tree_data, other_data):
     tree = build_tree(tree_data)
 
-    assert not any(
-        in_tree(address, value, tree.root) for address, value in other_data.items()
-    )
+    assert not any(in_tree(item, tree.root) for item in other_data)
 
 
 def test_valid_proof(tree_data):
     tree = build_tree(tree_data)
-    proofs = [
-        create_proof(address, value, tree) for address, value in tree_data.items()
-    ]
+    proofs = [create_proof(item, tree) for item in tree_data]
 
     assert all(
-        validate_proof(address, value, proof, tree.root.hash)
-        for (address, value), proof in zip(tree_data.items(), proofs)
+        validate_proof(item, proof, tree.root.hash)
+        for item, proof in zip(tree_data, proofs)
     )
 
 
 def test_invalid_proof(tree_data):
     tree = build_tree(tree_data)
 
-    address, value = next(iter(tree_data.items()))
-    assert not validate_proof(address, value, [], tree.root.hash)
+    item = next(iter(tree_data))
+    assert not validate_proof(item, [], tree.root.hash)
 
 
 def test_wrong_proof(tree_data):
     tree = build_tree(tree_data)
-    proofs = [
-        create_proof(address, value, tree) for address, value in tree_data.items()
-    ]
+    proofs = [create_proof(item, tree) for item in tree_data]
 
-    address, value = next(iter(tree_data.items()))
-    assert not validate_proof(address, value, proofs[4], tree.root.hash)
+    item = next(iter(tree_data))
+    assert not validate_proof(item, proofs[4], tree.root.hash)
 
 
 def test_wrong_value(tree_data, other_data):
     tree = build_tree(tree_data)
-    proofs = [
-        create_proof(address, value, tree) for address, value in tree_data.items()
-    ]
+    proofs = [create_proof(item, tree) for item in tree_data]
 
-    address, value = next(iter(other_data.items()))
-    assert not validate_proof(address, value, proofs[0], tree.root.hash)
+    item = next(iter(other_data))
+    assert not validate_proof(item, proofs[0], tree.root.hash)
 
 
 def test_tree_is_sorted(tree_data):
     root = compute_merkle_root(tree_data)
 
-    reversed_tree_data = dict(reversed(tuple(tree_data.items())))
-    assert tuple(reversed_tree_data.keys()) != tuple(tree_data.keys())
+    reversed_tree_data = list(reversed(tree_data))
+    assert reversed_tree_data != tree_data
     reversed_root = compute_merkle_root(reversed_tree_data)
 
     assert reversed_root == root
