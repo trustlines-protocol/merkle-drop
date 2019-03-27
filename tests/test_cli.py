@@ -3,7 +3,7 @@ from click.testing import CliRunner
 
 from eth_utils import to_checksum_address, to_normalized_address
 
-from merkle_drop.load_csv import load_airdrop_dict, validate_address_value_pairs
+from merkle_drop.load_csv import load_airdrop_file, validate_address_value_pairs
 from merkle_drop.cli import main
 
 
@@ -11,19 +11,19 @@ A_ADDRESS = b"\xaa" * 20
 B_ADDRESS = b"\xbb" * 20
 
 
-AIRDROP_DICT = {A_ADDRESS: 10, B_ADDRESS: 20}
+AIRDROP_DATA = {A_ADDRESS: 10, B_ADDRESS: 20}
 
 
 @pytest.fixture()
 def airdrop_list_file(tmp_path):
     folder = tmp_path / "subfolder"
     folder.mkdir()
-    file_path = folder / "airdrop_list.json"
+    file_path = folder / "airdrop_list.csv"
     file_path.write_text(
         "\n".join(
             (
                 ",".join((to_checksum_address(address), str(value)))
-                for address, value in AIRDROP_DICT.items()
+                for address, value in AIRDROP_DATA.items()
             )
         )
     )
@@ -41,10 +41,10 @@ def test_merkle_root_cli(runner, airdrop_list_file):
     assert result.exit_code == 0
 
 
-def test_read_json_file(airdrop_list_file):
+def test_read_csv_file(airdrop_list_file):
 
-    data = load_airdrop_dict(airdrop_list_file)
-    assert data == AIRDROP_DICT
+    data = load_airdrop_file(airdrop_list_file)
+    assert data == AIRDROP_DATA
 
 
 @pytest.mark.parametrize(
