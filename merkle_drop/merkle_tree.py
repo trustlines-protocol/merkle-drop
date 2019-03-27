@@ -25,9 +25,9 @@ class Node:
         return f"Node({self.hash!r}, {self.parent!r}, {self.left_child!r}, {self.right_child!r})"
 
 
-def compute_merkle_root(airdrop_list: list):
+def compute_merkle_root(address_value_dict: Dict[bytes, int]) -> bytes:
 
-    return build_tree(airdrop_list).root.hash
+    return build_tree(address_value_dict).root.hash
 
 
 def build_tree(address_value_dict: Dict[bytes, int]) -> Tree:
