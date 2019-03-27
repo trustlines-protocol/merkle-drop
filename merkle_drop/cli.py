@@ -1,5 +1,7 @@
 import click
 
+from eth_utils import encode_hex
+
 from .load_csv import load_airdrop_dict
 from .merkle_tree import compute_merkle_root
 
@@ -14,10 +16,6 @@ def main():
 def root(airdrop_json_file):
 
     airdrop_dict = load_airdrop_dict(airdrop_json_file)  # noqa F841
+    merkle_root = compute_merkle_root(airdrop_dict)
 
-    # TODO: adapt this to pass the correct list to `merkle_tree.py` once it is capable of processing a list of
-    #  addresses and balances and not only numbers.
-    airdrop_list = [1, 2, 3, 4, 5, 6]
-    merkle_root = compute_merkle_root(airdrop_list)
-
-    click.echo(f"The merkle root is: {merkle_root}")
+    click.echo(f"The merkle root is: {encode_hex(merkle_root)}")
