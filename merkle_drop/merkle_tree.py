@@ -1,16 +1,5 @@
 from typing import List, Optional
-import hashlib
-
-
-def sha(*args) -> bytes:
-    m = hashlib.sha256()
-    sorted_args = list(args)
-    sorted_args.sort()
-    for arg in sorted_args:
-        if not isinstance(arg, bytes):
-            arg = arg.to_bytes(4, byteorder="big")
-        m.update(arg)
-    return m.digest()
+from eth_utils import keccak
 
 
 class Tree:
@@ -52,7 +41,9 @@ def build_tree(values: List) -> Tree:
 
         for (node1, node2) in zip(current_nodes[0::2], current_nodes[1::2]):
             parent = Node(
-                sha(node1.hash, node2.hash), left_child=node1, right_child=node2
+                compute_parent_hash(node1.hash, node2.hash),
+                left_child=node1,
+                right_child=node2,
             )
             node1.parent = parent
             node2.parent = parent
@@ -70,7 +61,12 @@ def build_tree(values: List) -> Tree:
 
 
 def _build_leaves(values: List) -> List[Node]:
-    return [Node(sha(value)) for value in values]
+    return [Node(keccak(value)) for value in values]
+
+
+def compute_parent_hash(left_hash: bytes, right_hash: bytes) -> bytes:
+    little_child_hash, big_child_hash = sorted((left_hash, right_hash))
+    return keccak(little_child_hash + big_child_hash)
 
 
 def in_tree(value, root: Optional[Node]) -> bool:
@@ -78,7 +74,7 @@ def in_tree(value, root: Optional[Node]) -> bool:
     if root is None:
         return False
 
-    if root.hash == sha(value):
+    if root.hash == keccak(value):
         return True
 
     return in_tree(value, root.left_child) or in_tree(value, root.right_child)
@@ -86,7 +82,7 @@ def in_tree(value, root: Optional[Node]) -> bool:
 
 def create_proof(value, tree: Tree):
 
-    leave = next((leave for leave in tree.leaves if leave.hash == sha(value)), None)
+    leave = next((leave for leave in tree.leaves if leave.hash == keccak(value)), None)
 
     proof = []
 
@@ -116,9 +112,9 @@ def create_proof(value, tree: Tree):
 
 def validate_proof(value, proof: List[bytes], root_hash: bytes):
 
-    hash = sha(value)
+    hash = keccak(value)
 
     for h in proof:
-        hash = sha(hash, h)
+        hash = compute_parent_hash(hash, h)
 
     return hash == root_hash
