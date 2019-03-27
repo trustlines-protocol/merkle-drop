@@ -49,12 +49,12 @@ def test_read_json_file(airdrop_list_file):
 
 @pytest.mark.parametrize(
     "address_value_pairs",
-    (
+    [
         (),
         ((to_checksum_address(A_ADDRESS), "0"),),
         ((to_checksum_address(A_ADDRESS), "0"), (to_checksum_address(B_ADDRESS), "0")),
         ((to_checksum_address(A_ADDRESS), str(2 ** 256 - 1)),),
-    ),
+    ],
 )
 def test_valid_airdrop_file_validation(address_value_pairs):
     validate_address_value_pairs(address_value_pairs)
@@ -62,7 +62,7 @@ def test_valid_airdrop_file_validation(address_value_pairs):
 
 @pytest.mark.parametrize(
     "address_value_pairs",
-    (
+    [
         ((),),
         ((to_checksum_address(A_ADDRESS),)),
         ((to_checksum_address(A_ADDRESS), "0", "a third entry"),),
@@ -73,7 +73,7 @@ def test_valid_airdrop_file_validation(address_value_pairs):
         ((A_ADDRESS, "0"),),
         ((to_normalized_address(A_ADDRESS), "0"),),
         (("0", to_checksum_address(A_ADDRESS)),),
-    ),
+    ],
 )
 def test_invalid_airdrop_file_validation(address_value_pairs):
     with pytest.raises(ValueError):
