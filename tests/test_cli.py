@@ -10,9 +10,14 @@ from merkle_drop.cli import main
 A_ADDRESS = b"\xaa" * 20
 B_ADDRESS = b"\xbb" * 20
 C_ADDRESS = b"\xcc" * 20
+D_ADDRESS = b"\xdd" * 20
 
 
-AIRDROP_DATA = {A_ADDRESS: 10, B_ADDRESS: 20}
+AIRDROP_DATA = {A_ADDRESS: 10, B_ADDRESS: 20, D_ADDRESS: 30}
+
+
+def is_encoded_hash32(value: str) -> bool:
+    return is_hex(value) and len(value) == 2 + 2 * 32
 
 
 @pytest.fixture()
@@ -41,8 +46,7 @@ def test_merkle_root_cli(runner, airdrop_list_file):
     result = runner.invoke(main, ["root", str(airdrop_list_file)])
     assert result.exit_code == 0
     result_without_newline = result.output.rstrip()
-    assert is_hex(result_without_newline)
-    assert len(result_without_newline) == 2 + 2 * 32
+    assert is_encoded_hash32(result_without_newline)
 
 
 def test_read_csv_file(airdrop_list_file):
@@ -100,3 +104,23 @@ def test_merkle_not_existing_balance_cli(runner, airdrop_list_file):
     )
     assert result.exit_code == 0
     assert int(result.output) == 0
+
+
+def test_merkle_proof_cli(runner, airdrop_list_file):
+
+    result = runner.invoke(
+        main, ["proof", to_checksum_address(A_ADDRESS), str(airdrop_list_file)]
+    )
+    assert result.exit_code == 0
+    proof = result.output.split()
+    assert len(proof) == 2
+    for field in proof:
+        assert is_encoded_hash32(field)
+
+
+def test_not_existing_merkle_proof_cli(runner, airdrop_list_file):
+
+    result = runner.invoke(
+        main, ["proof", to_checksum_address(C_ADDRESS), str(airdrop_list_file)]
+    )
+    assert result.exit_code == 1

@@ -104,7 +104,7 @@ def in_tree(item: Item, root: Node) -> bool:
     return _in_tree(compute_leaf_hash(item), root)
 
 
-def create_proof(item: Item, tree: Tree):
+def create_proof(item: Item, tree: Tree) -> List[bytes]:
 
     leaf_hash = compute_leaf_hash(item)
     leaf = next((leave for leave in tree.leaves if leave.hash == leaf_hash), None)
