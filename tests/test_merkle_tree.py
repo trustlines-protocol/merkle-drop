@@ -50,6 +50,20 @@ def test_leaf_hash(item, leaf_hash):
     assert compute_leaf_hash(item) == leaf_hash
 
 
+@pytest.mark.parametrize(
+    "item",
+    (
+        Item(b"\xaa" * 19, 1),
+        Item(b"\xbb" * 21, 255),
+        Item(b"\xcc" * 20, -1),
+        Item(b"\xcc" * 20, 2 ** 257),
+    ),
+)
+def test_invalid_leaf_hash(item):
+    with pytest.raises(ValueError):
+        compute_leaf_hash(item)
+
+
 def test_in_tree(tree_data):
     tree = build_tree(tree_data)
 
