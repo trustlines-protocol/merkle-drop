@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from eth_utils import to_checksum_address, to_normalized_address
+from eth_utils import to_checksum_address, to_normalized_address, is_hex
 
 from merkle_drop.load_csv import load_airdrop_file, validate_address_value_pairs
 from merkle_drop.cli import main
@@ -40,7 +40,9 @@ def test_merkle_root_cli(runner, airdrop_list_file):
 
     result = runner.invoke(main, ["root", str(airdrop_list_file)])
     assert result.exit_code == 0
-    assert result.output.startswith("0x")
+    result_without_newline = result.output.rstrip()
+    assert is_hex(result_without_newline)
+    assert len(result_without_newline) == 2 + 2 * 32
 
 
 def test_read_csv_file(airdrop_list_file):
