@@ -2,7 +2,7 @@ import click
 
 from eth_utils import encode_hex
 
-from merkle_drop.airdrop import to_items
+from .airdrop import to_items
 from .load_csv import load_airdrop_file
 from .merkle_tree import compute_merkle_root
 
