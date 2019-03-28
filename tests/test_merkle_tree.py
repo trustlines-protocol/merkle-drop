@@ -109,6 +109,12 @@ def test_wrong_value(tree_data, other_data):
     assert not validate_proof(item, proofs[0], tree.root.hash)
 
 
+def test_can_not_create_proof_for_missing_item(tree_data, other_data):
+    tree = build_tree(tree_data)
+    with pytest.raises(ValueError):
+        create_proof(other_data[0], tree)
+
+
 def test_tree_is_sorted(tree_data):
     root = compute_merkle_root(tree_data)
 

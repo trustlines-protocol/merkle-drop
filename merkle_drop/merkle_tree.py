@@ -112,23 +112,23 @@ def create_proof(item: Item, tree: Tree):
     proof = []
 
     if leaf is None:
-        return None
+        raise ValueError("Can not create proof for missing item")
 
     while leaf.parent is not None:
         parent = leaf.parent
 
         if parent.left_child == leaf:
             if parent.right_child is None:
-                raise RuntimeError("Child should not be None in tree")
+                raise RuntimeError("Right child was none, invalid tree")
 
             proof.append(parent.right_child.hash)
         elif parent.right_child == leaf:
             if parent.left_child is None:
-                raise RuntimeError("Child should not be None in tree")
+                raise RuntimeError("Left child was none, invalid tree")
 
             proof.append(parent.left_child.hash)
         else:
-            raise RuntimeError("wrong leave")
+            raise RuntimeError("Item was not child of parent, invalid tree")
 
         leaf = leaf.parent
 
