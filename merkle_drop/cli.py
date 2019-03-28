@@ -1,10 +1,16 @@
 import click
 
-from eth_utils import encode_hex
+from eth_utils import encode_hex, is_checksum_address
 
 from .airdrop import to_items, get_balance
 from .load_csv import load_airdrop_file
 from .merkle_tree import compute_merkle_root
+
+
+def validate_address(ctx, param, value):
+    if not is_checksum_address(value):
+        raise click.BadParameter("Not a valid checksum address")
+    return value
 
 
 @click.group()
@@ -13,7 +19,7 @@ def main():
 
 
 @main.command(short_help="Compute Merkle root")
-@click.argument("airdrop_file_name")
+@click.argument("airdrop_file_name", type=click.Path(exists=True, dir_okay=False))
 def root(airdrop_file_name):
 
     airdrop_data = load_airdrop_file(airdrop_file_name)
@@ -23,8 +29,8 @@ def root(airdrop_file_name):
 
 
 @main.command(short_help="Balance of address")
-@click.argument("address")
-@click.argument("airdrop_file_name")
+@click.argument("address", callback=validate_address)
+@click.argument("airdrop_file_name", type=click.Path(exists=True, dir_okay=False))
 def balance(address, airdrop_file_name):
 
     airdrop_data = load_airdrop_file(airdrop_file_name)
