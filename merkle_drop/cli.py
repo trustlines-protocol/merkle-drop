@@ -1,6 +1,6 @@
 import click
 
-from eth_utils import encode_hex, is_checksum_address
+from eth_utils import encode_hex, is_checksum_address, to_canonical_address
 
 from .airdrop import to_items, get_balance
 from .load_csv import load_airdrop_file
@@ -10,7 +10,7 @@ from .merkle_tree import compute_merkle_root
 def validate_address(ctx, param, value):
     if not is_checksum_address(value):
         raise click.BadParameter("Not a valid checksum address")
-    return value
+    return to_canonical_address(value)
 
 
 @click.group()
