@@ -1,5 +1,6 @@
-from typing import NamedTuple
-from typing import List, Optional
+from typing import NamedTuple, Optional
+from typing import List
+
 from eth_utils import keccak, is_canonical_address
 
 
@@ -87,15 +88,20 @@ def compute_parent_hash(left_hash: bytes, right_hash: bytes) -> bytes:
     return keccak(little_child_hash + big_child_hash)
 
 
-def in_tree(item: Item, root: Optional[Node]) -> bool:
+def in_tree(item: Item, root: Node) -> bool:
+    def _in_tree(item_hash: bytes, root: Optional[Node]) -> bool:
 
-    if root is None:
-        return False
+        if root is None:
+            return False
 
-    if root.hash == compute_leaf_hash(item):
-        return True
+        if root.hash == item_hash:
+            return True
 
-    return in_tree(item, root.left_child) or in_tree(item, root.right_child)
+        return _in_tree(item_hash, root.left_child) or _in_tree(
+            item_hash, root.right_child
+        )
+
+    return _in_tree(compute_leaf_hash(item), root)
 
 
 def create_proof(item: Item, tree: Tree):
