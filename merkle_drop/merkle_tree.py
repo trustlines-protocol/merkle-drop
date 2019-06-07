@@ -21,6 +21,7 @@ class Node:
         hash: bytes,
         *,
         parent: "Node" = None,
+        # left and right is arbitrary
         left_child: "Node" = None,
         right_child: "Node" = None,
     ):
@@ -48,6 +49,7 @@ def build_tree(items: List[Item]) -> Tree:
         for (node1, node2) in zip(current_nodes[0::2], current_nodes[1::2]):
             parent = Node(
                 compute_parent_hash(node1.hash, node2.hash),
+                # left and right is arbitrary
                 left_child=node1,
                 right_child=node2,
             )
