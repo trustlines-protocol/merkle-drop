@@ -1,7 +1,7 @@
 import pytest
 import eth_tester
 
-from merkle_drop.merkle_tree import (build_tree, Item, create_proof, validate_proof)
+from merkle_drop.merkle_tree import build_tree, Item, create_proof, validate_proof
 
 # increase eth_tester's GAS_LIMIT
 assert eth_tester.backends.pyevm.main.GENESIS_GAS_LIMIT < 8 * 10 ** 6
@@ -29,7 +29,6 @@ def proofs_for_tree_data(tree_data):
     tree = build_tree(tree_data)
     proofs = [create_proof(item, tree) for item in tree_data]
 
-
     assert all(
         validate_proof(item, proof, tree.root.hash)
         for item, proof in zip(tree_data, proofs)
@@ -47,8 +46,7 @@ def root_hash_for_tree_data(tree_data):
 @pytest.fixture(scope="session")
 def merkle_drop_contract(deploy_contract, web3, root_hash_for_tree_data):
     contract = deploy_contract(
-        "MerkleDrop",
-        constructor_args=(root_hash_for_tree_data,)
+        "MerkleDrop", constructor_args=(root_hash_for_tree_data,)
     )
 
     return contract
