@@ -20,7 +20,7 @@ contract MerkleDrop {
         return verifyProof(leaf, proof);
     }
 
-    function verifyProof(bytes32 leaf, bytes32[] memory proof) view internal returns (bool) {
+    function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
         bytes32 currentHash = leaf;
 
         for (uint i = 0; i <= proof.length - 1; i += 1) {
