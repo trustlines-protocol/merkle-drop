@@ -9,7 +9,11 @@ contract MerkleDrop {
         root = _root;
     }
 
-    function withdraw(address recipient, uint value, bytes32[] memory proof) public {
+    function withdraw(uint value, bytes32[] memory proof) public {
+        require(checkEntitlement(msg.sender, value, proof), "The proof could not be verified.");
+    }
+
+    function withdrawFor(address recipient, uint value, bytes32[] memory proof) public {
         require(checkEntitlement(recipient, value, proof), "The proof could not be verified.");
     }
 
@@ -23,7 +27,7 @@ contract MerkleDrop {
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
         bytes32 currentHash = leaf;
 
-        for (uint i = 0; i <= proof.length - 1; i += 1) {
+        for (uint i = 0; i < proof.length; i += 1) {
             currentHash = parentHash(currentHash, proof[i]);
         }
 
