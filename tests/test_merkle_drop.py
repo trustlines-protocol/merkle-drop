@@ -138,7 +138,7 @@ def test_entitlement_with_decay(
     ).call() == value * (1 - decay_multiplier)
 
 
-@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75])
 def test_withdraw_with_decay(
     merkle_drop_contract,
     dropped_token_contract,
@@ -161,3 +161,36 @@ def test_withdraw_with_decay(
     assert dropped_token_contract.functions.balanceOf(
         eligible_address_0
     ).call() == eligible_value_0 * (1 - decay_multiplier)
+
+
+def test_entitlement_after_decay(
+    merkle_drop_contract, decay_start_time, decay_duration
+):
+    value = 123456
+    decay_multiplier = 2
+    time = int(decay_start_time + decay_duration * decay_multiplier)
+    assert (
+        merkle_drop_contract.functions.decayedEntitlementAtTime(value, time).call() == 0
+    )
+
+
+def test_withdraw_after_decay(
+    merkle_drop_contract,
+    dropped_token_contract,
+    chain,
+    decay_start_time,
+    decay_duration,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+):
+
+    decay_multiplier = 2
+    time = int(decay_start_time + decay_duration * decay_multiplier)
+    chain.time_travel(time)
+    chain.mine_block()
+
+    with pytest.raises(eth_tester.exceptions.TransactionFailed):
+        merkle_drop_contract.functions.withdrawFor(
+            eligible_address_0, eligible_value_0, proof_0
+        ).transact()

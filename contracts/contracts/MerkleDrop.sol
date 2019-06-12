@@ -30,9 +30,10 @@ contract MerkleDrop {
         require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
         require(droppedToken.balanceOf(address(this)) >= value, "The MerkleDrop does not have tokens to drop yet / anymore.");
 
-        withdrawn[recipient] = true;
-
         uint valueToSend = decayedEntitlementAtTime(value, now);
+        require(valueToSend != 0, "The decayed entitled value is now null.");
+
+        withdrawn[recipient] = true;
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -47,9 +48,13 @@ contract MerkleDrop {
     function decayedEntitlementAtTime(uint value, uint time) public view returns (uint) {
         if (time <= decayStartTime) {
             return value;
+        } else if (time >= decayStartTime + decayDurationInSeconds) {
+            return 0;
         } else {
             uint timeDecayed = time - decayStartTime;
-            return value - value * timeDecayed / decayDurationInSeconds;
+            uint valueDecay = value * timeDecayed / decayDurationInSeconds;
+            assert(valueDecay <= value);
+            return value - valueDecay;
         }
     }
 
