@@ -32,7 +32,7 @@ contract MerkleDrop {
 
         withdrawn[recipient] = true;
 
-        uint valueToSend = entitlementAtTime(value, now);
+        uint valueToSend = decayedEntitlementAtTime(value, now);
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -44,7 +44,7 @@ contract MerkleDrop {
         return verifyProof(leaf, proof);
     }
 
-    function entitlementAtTime(uint value, uint time) public view returns (uint) {
+    function decayedEntitlementAtTime(uint value, uint time) public view returns (uint) {
         if (time <= decayStartTime) {
             return value;
         } else {

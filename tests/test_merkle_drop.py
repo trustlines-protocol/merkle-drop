@@ -133,7 +133,7 @@ def test_entitlement_with_decay(
 ):
     value = 123456
     time = int(decay_start_time + decay_duration * decay_multiplier)
-    assert merkle_drop_contract.functions.entitlementAtTime(
+    assert merkle_drop_contract.functions.decayedEntitlementAtTime(
         value, time
     ).call() == value * (1 - decay_multiplier)
 
