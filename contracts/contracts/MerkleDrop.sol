@@ -10,6 +10,8 @@ contract MerkleDrop {
 
     mapping (address => bool) withdrawn;
 
+    event Withdraw(address recipient, uint value);
+
     constructor(DroppedToken _droppedToken, bytes32 _root) public {
         root = _root;
         droppedToken = _droppedToken;
@@ -26,6 +28,8 @@ contract MerkleDrop {
 
         withdrawn[recipient] = true;
         droppedToken.transfer(recipient, value);
+
+        emit Withdraw(recipient, value);
     }
 
     function checkEntitlement(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {
