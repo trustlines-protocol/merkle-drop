@@ -65,7 +65,7 @@ def premint_token_owner(accounts):
 
 @pytest.fixture(scope="session")
 def premint_token_value():
-    # The returned value should be higher than the dropped value: see values in `tree_data`
+    # The returned value should be equal to the dropped value: see values in `tree_data`
     return 15_000_000
 
 
@@ -116,11 +116,16 @@ def merkle_drop_contract(
         "MerkleDrop",
         constructor_args=(
             dropped_token_contract.address,
+            premint_token_value,
             root_hash_for_tree_data,
             decay_start_time,
             decay_duration,
         ),
     )
+
+    dropped_token_contract.functions.storeAddressOfMerkleDrop(
+        contract.address
+    ).transact()
 
     dropped_token_contract.functions.transfer(
         contract.address, premint_token_value

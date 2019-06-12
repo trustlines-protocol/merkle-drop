@@ -24,6 +24,16 @@ def merkle_drop_contract_already_withdrawn(
     return merkle_drop_contract
 
 
+@pytest.fixture()
+def time_travel_chain_to_decay_multiplier(chain, decay_start_time, decay_duration):
+    def time_travel(decay_multiplier):
+        time = int(decay_start_time + decay_duration * decay_multiplier)
+        chain.time_travel(time)
+        chain.mine_block()
+
+    return time_travel
+
+
 def test_proof_entitlement(merkle_drop_contract, tree_data, proofs_for_tree_data):
 
     for i in range(len(proofs_for_tree_data)):
@@ -142,17 +152,13 @@ def test_entitlement_with_decay(
 def test_withdraw_with_decay(
     merkle_drop_contract,
     dropped_token_contract,
-    chain,
-    decay_start_time,
-    decay_duration,
+    time_travel_chain_to_decay_multiplier,
     decay_multiplier,
     eligible_address_0,
     eligible_value_0,
     proof_0,
 ):
-    time = int(decay_start_time + decay_duration * decay_multiplier)
-    chain.time_travel(time)
-    chain.mine_block()
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     merkle_drop_contract.functions.withdrawFor(
         eligible_address_0, eligible_value_0, proof_0
@@ -176,21 +182,176 @@ def test_entitlement_after_decay(
 
 def test_withdraw_after_decay(
     merkle_drop_contract,
-    dropped_token_contract,
-    chain,
-    decay_start_time,
-    decay_duration,
+    time_travel_chain_to_decay_multiplier,
     eligible_address_0,
     eligible_value_0,
     proof_0,
 ):
 
     decay_multiplier = 2
-    time = int(decay_start_time + decay_duration * decay_multiplier)
-    chain.time_travel(time)
-    chain.mine_block()
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
         merkle_drop_contract.functions.withdrawFor(
             eligible_address_0, eligible_value_0, proof_0
         ).transact()
+
+
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+def test_burn_unusable_tokens(
+    merkle_drop_contract,
+    dropped_token_contract,
+    time_travel_chain_to_decay_multiplier,
+    decay_multiplier,
+):
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+
+    balance_before = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+    balance_after = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+
+    assert balance_after == (1 - decay_multiplier) * balance_before
+
+
+def test_burn_tokens_after_decay_duration(
+    merkle_drop_contract, dropped_token_contract, time_travel_chain_to_decay_multiplier
+):
+    decay_multiplier = 2
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+    balance = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+
+    assert balance == 0
+
+
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75])
+def test_withdraw_after_burn(
+    merkle_drop_contract,
+    dropped_token_contract,
+    time_travel_chain_to_decay_multiplier,
+    decay_multiplier,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+):
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    assert dropped_token_contract.functions.balanceOf(
+        eligible_address_0
+    ).call() == eligible_value_0 * (1 - decay_multiplier)
+
+
+def test_balance_null_after_withdraw_and_burn(
+    merkle_drop_contract,
+    dropped_token_contract,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+    time_travel_chain_to_decay_multiplier,
+):
+    # Test scenario with burn at two different times and a withdraw
+    # to see if the final balance is indeed 0 and no errors are raised.
+
+    decay_multiplier = 0.25
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    decay_multiplier = 0.5
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    decay_multiplier = 0.75
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    decay_multiplier = 1
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    assert (
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        == 0
+    )
+
+
+def test_everyone_can_withdraw_after_burns(
+    merkle_drop_contract,
+    dropped_token_contract,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+    tree_data,
+    proofs_for_tree_data,
+    time_travel_chain_to_decay_multiplier,
+):
+    # Test scenario with burn at two different times and withdraws
+    # to see if every entitled user is able to withdraw and the final balance is 0
+
+    decay_multiplier = 0.25
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    decay_multiplier = 0.5
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    decay_multiplier = 0.75
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    for i in range(1, len(proofs_for_tree_data)):
+        address = tree_data[i].address
+        value = tree_data[i].value
+        proof = proofs_for_tree_data[i]
+
+        merkle_drop_contract.functions.withdrawFor(address, value, proof).transact()
+
+    decay_multiplier = 1
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    assert (
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        == 0
+    )
+
+
+def test_burn_enough_token(
+    merkle_drop_contract,
+    dropped_token_contract,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+    time_travel_chain_to_decay_multiplier,
+    premint_token_value,
+):
+    # test whether the value of token we burn is the maximum value we can burn.
+
+    decay_multiplier = 0.5
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    assert (
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        == (premint_token_value - eligible_value_0) * 0.5
+    )

@@ -10,12 +10,19 @@ contract MerkleDrop {
     uint public decayStartTime;
     uint public decayDurationInSeconds;
 
+    uint public initialBalance;
+    uint public remainingValue;  // The total not decayed not withdrawn entitlements
+    uint public spentTokens;  // The total tokens spent by the contract, burnt or withdrawn
+
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
+    event Burn(uint value);
 
-    constructor(DroppedToken _droppedToken, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
+    constructor(DroppedToken _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
+        initialBalance = _initialBalance;
+        remainingValue = _initialBalance;
         root = _root;
         decayStartTime = _decayStartTime;
         decayDurationInSeconds = _decayDurationInSeconds;
@@ -29,12 +36,17 @@ contract MerkleDrop {
         require(verifyEntitled(recipient, value, proof), "The proof could not be verified.");
         require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
 
+        burnUnusableTokens();
+
         uint valueToSend = decayedEntitlementAtTime(value, now);
         assert(valueToSend <= value);
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
+        remainingValue -= value;
+        spentTokens += valueToSend;
+
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -53,10 +65,27 @@ contract MerkleDrop {
             return 0;
         } else {
             uint timeDecayed = time - decayStartTime;
-            uint valueDecay = value * timeDecayed / decayDurationInSeconds;
+            uint valueDecay = decay(value, timeDecayed, decayDurationInSeconds);
             assert(valueDecay <= value);
             return value - valueDecay;
         }
+    }
+
+    function burnUnusableTokens() public {
+        if (now <= decayStartTime) {
+            return;
+        }
+
+        // The amount of tokens that should be held within the contract after burning
+        uint targetBalance = decayedEntitlementAtTime(remainingValue, now);
+
+        // toBurn = (initial balance - target balance) - what we already removed from initial balance
+        uint currentBalance = initialBalance - spentTokens;
+        assert(targetBalance <= currentBalance);
+        uint toBurn = currentBalance - targetBalance;
+
+        spentTokens += toBurn;
+        burn(toBurn);
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
@@ -75,5 +104,18 @@ contract MerkleDrop {
         } else {
             return keccak256(abi.encode(b, a));
         }
+    }
+
+    function burn(uint value) internal {
+        if (value == 0) {
+            return;
+        }
+        emit Burn(value);
+        droppedToken.burn(value);
+    }
+
+    function decay(uint value, uint timeToDecay, uint totalDecayTime) internal pure returns (uint) {
+        uint decay = value*timeToDecay/totalDecayTime;
+        return decay >= value ? value : decay;
     }
 }
