@@ -7,14 +7,18 @@ contract MerkleDrop {
 
     bytes32 public root;
     DroppedToken public droppedToken;
+    uint public decayStartTime;
+    uint public decayDurationInSeconds;
 
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
 
-    constructor(DroppedToken _droppedToken, bytes32 _root) public {
-        root = _root;
+    constructor(DroppedToken _droppedToken, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
+        root = _root;
+        decayStartTime = _decayStartTime;
+        decayDurationInSeconds = _decayDurationInSeconds;
     }
 
     function withdraw(uint value, bytes32[] memory proof) public {
@@ -22,21 +26,31 @@ contract MerkleDrop {
     }
 
     function withdrawFor(address recipient, uint value, bytes32[] memory proof) public {
-        require(checkEntitlement(recipient, value, proof), "The proof could not be verified.");
+        require(verifyEntitled(recipient, value, proof), "The proof could not be verified.");
         require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
-        require(droppedToken.balanceOf(address(this)) > value, "The MerkleDrop does not have tokens to drop yet / anymore.");
+        require(droppedToken.balanceOf(address(this)) >= value, "The MerkleDrop does not have tokens to drop yet / anymore.");
 
         withdrawn[recipient] = true;
-        droppedToken.transfer(recipient, value);
 
+        uint valueToSend = entitlementAtTime(value, now);
+        droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
 
-    function checkEntitlement(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {
+    function verifyEntitled(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {
         // We need to pack pack the 20 bytes address to the 32 bytes value
         // to match with the proof made with the python merkle-drop package
         bytes32 leaf = keccak256(abi.encodePacked(recipient, value));
         return verifyProof(leaf, proof);
+    }
+
+    function entitlementAtTime(uint value, uint time) public view returns (uint) {
+        if (time <= decayStartTime) {
+            return value;
+        } else {
+            uint timeDecayed = time - decayStartTime;
+            return value - value * timeDecayed / decayDurationInSeconds;
+        }
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
