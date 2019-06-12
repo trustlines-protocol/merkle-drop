@@ -38,15 +38,77 @@ def proofs_for_tree_data(tree_data):
 
 
 @pytest.fixture(scope="session")
+def eligible_address_0(tree_data):
+    return tree_data[0].address
+
+
+@pytest.fixture(scope="session")
+def eligible_value_0(tree_data):
+    return tree_data[0].value
+
+
+@pytest.fixture(scope="session")
+def proof_0(proofs_for_tree_data):
+    return proofs_for_tree_data[0]
+
+
+@pytest.fixture(scope="session")
 def root_hash_for_tree_data(tree_data):
     tree = build_tree(tree_data)
     return tree.root.hash
 
 
 @pytest.fixture(scope="session")
-def merkle_drop_contract(deploy_contract, web3, root_hash_for_tree_data):
+def premint_token_owner(accounts):
+    return accounts[0]
+
+
+@pytest.fixture(scope="session")
+def premint_token_value():
+    # The returned value should be higher than the dropped value: see values in `tree_data`
+    return 1000
+
+
+@pytest.fixture(scope="session")
+def dropped_token_contract(
+    deploy_contract, root_hash_for_tree_data, premint_token_owner, premint_token_value
+):
+    # A token contract with premint token for the merkle drop.
+    # The tokens are transferred to the MerkleDrop upon deployment of MerkleDrop.
     contract = deploy_contract(
-        "MerkleDrop", constructor_args=(root_hash_for_tree_data,)
+        "DroppedToken",
+        constructor_args=(
+            "droppedToken",
+            "DTN",
+            18,
+            premint_token_owner,
+            premint_token_value,
+        ),
+    )
+
+    return contract
+
+
+@pytest.fixture(scope="session")
+def merkle_drop_contract(
+    deploy_contract,
+    root_hash_for_tree_data,
+    dropped_token_contract,
+    premint_token_owner,
+    premint_token_value,
+):
+    # The MerkleDrop contract owns enough token for airdropping
+    contract = deploy_contract(
+        "MerkleDrop",
+        constructor_args=(dropped_token_contract.address, root_hash_for_tree_data),
+    )
+
+    dropped_token_contract.functions.transfer(
+        contract.address, premint_token_value
+    ).transact({"from": premint_token_owner})
+    assert (
+        dropped_token_contract.functions.balanceOf(contract.address).call()
+        == premint_token_value
     )
 
     return contract

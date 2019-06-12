@@ -1,20 +1,31 @@
 pragma solidity ^0.5.8;
 
+import "./DroppedToken.sol";
+
 
 contract MerkleDrop {
 
     bytes32 public root;
+    DroppedToken public droppedToken;
 
-    constructor(bytes32 _root) public {
+    mapping (address => bool) withdrawn;
+
+    constructor(DroppedToken _droppedToken, bytes32 _root) public {
         root = _root;
+        droppedToken = _droppedToken;
     }
 
     function withdraw(uint value, bytes32[] memory proof) public {
-        require(checkEntitlement(msg.sender, value, proof), "The proof could not be verified.");
+        withdrawFor(msg.sender, value, proof);
     }
 
     function withdrawFor(address recipient, uint value, bytes32[] memory proof) public {
         require(checkEntitlement(recipient, value, proof), "The proof could not be verified.");
+        require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
+        require(droppedToken.balanceOf(address(this)) > value, "The MerkleDrop does not have tokens to drop yet / anymore.");
+
+        withdrawn[recipient] = true;
+        droppedToken.transfer(recipient, value);
     }
 
     function checkEntitlement(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {
