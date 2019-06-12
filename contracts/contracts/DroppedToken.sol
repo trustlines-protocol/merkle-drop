@@ -1,11 +1,15 @@
 pragma solidity ^0.5.8;
 
 import "./SafeMath.sol";
+import "./MerkleDrop.sol";
 
 
 // This token is a copy of the TrustlinesNetworkToken as of commit 0651fb21bc35380a551988a8dc9fedd763abb253.
+// The burn and transfer functions have been modified for test purpose.
 // It is used for testing the MerkleDrop contract.
 // The MerkleDrop contract is able to drop any ERC20 token however.
+
+// This contract should not be deployed
 
 contract DroppedToken {
 
@@ -16,6 +20,9 @@ contract DroppedToken {
     string private _symbol;
     uint8 private _decimals;
     uint256 private _totalSupply;
+    bool private burnLoopFlag;
+
+    MerkleDrop public merkleDrop;
 
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -29,6 +36,10 @@ contract DroppedToken {
         _decimals = decimals;
 
         _mint(preMintAddress, preMintAmount);
+    }
+
+    function storeAddressOfMerkleDrop(address _merkleDrop) public {
+        merkleDrop = MerkleDrop(_merkleDrop);
     }
 
     function balanceOf(address account) public view returns (uint256) {
@@ -56,6 +67,8 @@ contract DroppedToken {
     }
 
     function transfer(address recipient, uint256 amount) public returns (bool) {
+        // We call merkleDrop.burnUnusableTokens() here as a test to see if it will burn too many tokens if we call it before updating the balances.
+        merkleDrop.burnUnusableTokens();
         _transfer(msg.sender, recipient, amount);
     }
 
@@ -75,7 +88,14 @@ contract DroppedToken {
     }
 
     function burn(uint256 amount) public {
+        // We call merkleDrop.burnUnusableTokens() here as a test to see if it will burn too many tokens if we re-enter it.
+        // We use the burnLoopFlag to prevent an infinite loop of calls, knowing MerkleDrop.sol calls the burn function again.
+        if (! burnLoopFlag) {
+            burnLoopFlag = true;
+            merkleDrop.burnUnusableTokens();
+        }
         _burn(msg.sender, amount);
+        burnLoopFlag = false;
     }
 
     function _mint(address account, uint256 amount) internal {
