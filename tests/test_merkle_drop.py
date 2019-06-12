@@ -1,6 +1,7 @@
 import pytest
 
 import eth_tester.exceptions
+from eth_utils import to_checksum_address
 
 
 @pytest.fixture()
@@ -105,3 +106,21 @@ def test_withdraw_wrong_proof(
         merkle_drop_contract_already_withdrawn.functions.withdrawFor(
             other_data[0].address, other_data[0].value, proof_0
         ).transact()
+
+
+def test_withdraw_event(
+    merkle_drop_contract, web3, eligible_address_0, eligible_value_0, proof_0
+):
+
+    latest_block_number = web3.eth.blockNumber
+
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    event = merkle_drop_contract.events.Withdraw.createFilter(
+        fromBlock=latest_block_number
+    ).get_all_entries()[0]["args"]
+
+    assert event["recipient"] == to_checksum_address(eligible_address_0)
+    assert event["value"] == eligible_value_0
