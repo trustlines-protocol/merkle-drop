@@ -9,10 +9,12 @@ contract MerkleDrop {
     DroppedToken public droppedToken;
     uint public decayStartTime;
     uint public decayDurationInSeconds;
+    uint public lastBurnTime;
 
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
+    event Burn(uint value);
 
     constructor(DroppedToken _droppedToken, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
@@ -35,6 +37,7 @@ contract MerkleDrop {
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
+        burn(value - valueToSend);
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -53,10 +56,26 @@ contract MerkleDrop {
             return 0;
         } else {
             uint timeDecayed = time - decayStartTime;
-            uint valueDecay = value * timeDecayed / decayDurationInSeconds;
+            uint valueDecay = decayOverPeriod(value, timeDecayed);
             assert(valueDecay <= value);
             return value - valueDecay;
         }
+    }
+
+    function burnUnusableTokens() public {
+        require(now >= decayStartTime, "The decay star time has not been reached yet, there is no token to burn.");
+        uint timeToBurn;
+        if (lastBurnTime == 0) {
+            // We have never burned yet
+            timeToBurn = now - decayStartTime;
+        } else {
+            timeToBurn = now - lastBurnTime;
+        }
+        uint totalEntitlement = droppedToken.balanceOf(address(this));
+        uint totalDecay = decayOverPeriod(totalEntitlement, timeToBurn);
+
+        lastBurnTime = now;
+        burn(totalDecay);
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
@@ -75,5 +94,14 @@ contract MerkleDrop {
         } else {
             return keccak256(abi.encode(b, a));
         }
+    }
+
+    function burn(uint value) internal {
+        emit Burn(value);
+        droppedToken.burn(value);
+    }
+
+    function decayOverPeriod(uint value, uint time) internal view returns (uint) {
+        return value * time / decayDurationInSeconds;
     }
 }

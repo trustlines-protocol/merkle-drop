@@ -176,7 +176,6 @@ def test_entitlement_after_decay(
 
 def test_withdraw_after_decay(
     merkle_drop_contract,
-    dropped_token_contract,
     chain,
     decay_start_time,
     decay_duration,
@@ -194,3 +193,28 @@ def test_withdraw_after_decay(
         merkle_drop_contract.functions.withdrawFor(
             eligible_address_0, eligible_value_0, proof_0
         ).transact()
+
+
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+def test_burn_unusable_tokens(
+    merkle_drop_contract,
+    dropped_token_contract,
+    chain,
+    decay_start_time,
+    decay_duration,
+    decay_multiplier,
+):
+
+    time = int(decay_start_time + decay_duration * decay_multiplier)
+    chain.time_travel(time)
+    chain.mine_block()
+
+    balance_before = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+    balance_after = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+
+    assert balance_after == (1 - decay_multiplier) * balance_before
