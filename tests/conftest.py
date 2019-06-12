@@ -11,11 +11,11 @@ eth_tester.backends.pyevm.main.GENESIS_GAS_LIMIT = 8 * 10 ** 6
 @pytest.fixture(scope="session")
 def tree_data():
     return [
-        Item(b"\xaa" * 20, 1),
-        Item(b"\xbb" * 20, 2),
-        Item(b"\xcc" * 20, 3),
-        Item(b"\xdd" * 20, 4),
-        Item(b"\xee" * 20, 5),
+        Item(b"\xaa" * 20, 1_000_000),
+        Item(b"\xbb" * 20, 2_000_000),
+        Item(b"\xcc" * 20, 3_000_000),
+        Item(b"\xdd" * 20, 4_000_000),
+        Item(b"\xee" * 20, 5_000_000),
     ]
 
 
@@ -66,7 +66,7 @@ def premint_token_owner(accounts):
 @pytest.fixture(scope="session")
 def premint_token_value():
     # The returned value should be higher than the dropped value: see values in `tree_data`
-    return 1000
+    return 15_000_000
 
 
 @pytest.fixture(scope="session")
@@ -90,17 +90,36 @@ def dropped_token_contract(
 
 
 @pytest.fixture(scope="session")
+def decay_start_time():
+    # 01/01/2100 at 00:00
+    return 4_102_444_800
+
+
+@pytest.fixture(scope="session")
+def decay_duration():
+    # two years
+    return 3600 * 24 * 365 * 2
+
+
+@pytest.fixture(scope="session")
 def merkle_drop_contract(
     deploy_contract,
     root_hash_for_tree_data,
     dropped_token_contract,
     premint_token_owner,
     premint_token_value,
+    decay_start_time,
+    decay_duration,
 ):
     # The MerkleDrop contract owns enough token for airdropping
     contract = deploy_contract(
         "MerkleDrop",
-        constructor_args=(dropped_token_contract.address, root_hash_for_tree_data),
+        constructor_args=(
+            dropped_token_contract.address,
+            root_hash_for_tree_data,
+            decay_start_time,
+            decay_duration,
+        ),
     )
 
     dropped_token_contract.functions.transfer(

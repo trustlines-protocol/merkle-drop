@@ -30,7 +30,7 @@ def test_proof_entitlement(merkle_drop_contract, tree_data, proofs_for_tree_data
         address = tree_data[i].address
         value = tree_data[i].value
         proof = proofs_for_tree_data[i]
-        assert merkle_drop_contract.functions.checkEntitlement(
+        assert merkle_drop_contract.functions.verifyEntitled(
             address, value, proof
         ).call()
 
@@ -43,7 +43,7 @@ def test_incorrect_value_entitlement(
     proof = proofs_for_tree_data[0]
 
     assert (
-        merkle_drop_contract.functions.checkEntitlement(
+        merkle_drop_contract.functions.verifyEntitled(
             address, incorrect_value, proof
         ).call()
         is False
@@ -58,7 +58,7 @@ def test_incorrect_proof_entitlement(
     incorrect_proof = proofs_for_tree_data[0]
 
     assert (
-        merkle_drop_contract.functions.checkEntitlement(
+        merkle_drop_contract.functions.verifyEntitled(
             address, value, incorrect_proof
         ).call()
         is False
@@ -69,6 +69,7 @@ def test_withdraw(
     merkle_drop_contract, tree_data, proofs_for_tree_data, dropped_token_contract
 ):
     for i in range(len(proofs_for_tree_data)):
+
         merkle_drop_balance = dropped_token_contract.functions.balanceOf(
             merkle_drop_contract.address
         ).call()
@@ -124,3 +125,39 @@ def test_withdraw_event(
 
     assert event["recipient"] == to_checksum_address(eligible_address_0)
     assert event["value"] == eligible_value_0
+
+
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+def test_entitlement_with_decay(
+    merkle_drop_contract, decay_start_time, decay_duration, decay_multiplier
+):
+    value = 123456
+    time = int(decay_start_time + decay_duration * decay_multiplier)
+    assert merkle_drop_contract.functions.entitlementAtTime(
+        value, time
+    ).call() == value * (1 - decay_multiplier)
+
+
+@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+def test_withdraw_with_decay(
+    merkle_drop_contract,
+    dropped_token_contract,
+    chain,
+    decay_start_time,
+    decay_duration,
+    decay_multiplier,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+):
+    time = int(decay_start_time + decay_duration * decay_multiplier)
+    chain.time_travel(time)
+    chain.mine_block()
+
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    assert dropped_token_contract.functions.balanceOf(
+        eligible_address_0
+    ).call() == eligible_value_0 * (1 - decay_multiplier)
