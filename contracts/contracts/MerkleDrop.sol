@@ -28,9 +28,10 @@ contract MerkleDrop {
     function withdrawFor(address recipient, uint value, bytes32[] memory proof) public {
         require(verifyEntitled(recipient, value, proof), "The proof could not be verified.");
         require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
-        require(droppedToken.balanceOf(address(this)) >= value, "The MerkleDrop does not have tokens to drop yet / anymore.");
 
         uint valueToSend = decayedEntitlementAtTime(value, now);
+        assert(valueToSend <= value);
+        require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
