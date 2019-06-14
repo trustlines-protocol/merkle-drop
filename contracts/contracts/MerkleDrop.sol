@@ -12,8 +12,8 @@ contract MerkleDrop {
     uint public lastBurnTime;
 
     uint public initialEntitlement = 15000000;  // just for testing, need to be set in the constructor
-    uint public withdrawnValue;
-    uint public burntTokens;
+    uint public withdrawnValue;  // The total not decayed withdrawn entitlements
+    uint public burntTokens;  // the total burnt tokens
 
     mapping (address => bool) withdrawn;
 
@@ -43,15 +43,7 @@ contract MerkleDrop {
         withdrawn[recipient] = true;
         withdrawnValue += value;
 
-        // we burn the value not sent that has not been burnt via burnUnusableTokens yet.
-        uint valueToBurn;
-        if (lastBurnTime == 0) {
-            valueToBurn = value - valueToSend;
-        } else {
-            valueToBurn = value * (now - lastBurnTime)/decayDurationInSeconds;
-        }
-        // burn(valueToBurn);
-
+        burnUnusableTokensDuringWithdraw(valueToSend);
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -77,20 +69,21 @@ contract MerkleDrop {
     }
 
     function burnUnusableTokens() public {
-        require(now >= decayStartTime, "The decay start time has not been reached yet, there is no token to burn.");
-        uint decayEndTime = decayStartTime + decayDurationInSeconds;
-        if (now >= decayEndTime) {
-            lastBurnTime = now;
-            burn(droppedToken.balanceOf(address(this)));
+        burnUnusableTokensDuringWithdraw(0);
+    }
+
+    function burnUnusableTokensDuringWithdraw(uint valueToWithdraw) internal {
+        if (now <= decayStartTime) {
             return;
         }
 
         uint remainingValue = initialEntitlement - withdrawnValue;
         uint decayedRemainingValue = remainingValue - decay(remainingValue, now - decayStartTime, decayDurationInSeconds);
-        // need to check whether rounding errors burns too much or not enough
 
-        uint currentBalance = droppedToken.balanceOf(address(this));
-
+        // We need to update the balance of the contract to take into account the potential ongoing withdraw.
+        // Otherwise, we have a re-entrancy vulnerability where a withdraw in the token contract could call the burn function before transferring tokens
+        // resulting in burning tokens based on the wrong balance, thus burning too many tokens.
+        uint currentBalance = droppedToken.balanceOf(address(this)) - valueToWithdraw;
         uint toBurn = currentBalance - decayedRemainingValue;
 
         burntTokens += toBurn;
@@ -123,6 +116,7 @@ contract MerkleDrop {
     }
 
     function decay(uint value, uint timeToDecay, uint totalDecayTime) internal pure returns (uint) {
-        return value*timeToDecay/totalDecayTime;
+        uint decay = value*timeToDecay/totalDecayTime;
+        return decay >= value ? value : decay;
     }
 }

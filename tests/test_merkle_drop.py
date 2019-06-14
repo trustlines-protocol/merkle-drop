@@ -325,12 +325,24 @@ def test_everyone_can_withdraw_after_burns(
     time_travel_chain_to_decay_multiplier(decay_multiplier)
     merkle_drop_contract.functions.burnUnusableTokens().transact()
 
+    print(
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        / 1000
+    )
+
     for i in range(1, len(proofs_for_tree_data)):
         address = tree_data[i].address
         value = tree_data[i].value
         proof = proofs_for_tree_data[i]
 
         merkle_drop_contract.functions.withdrawFor(address, value, proof).transact()
+
+        print(
+            dropped_token_contract.functions.balanceOf(
+                merkle_drop_contract.address
+            ).call()
+            / 1000
+        )
 
     decay_multiplier = 1
     time_travel_chain_to_decay_multiplier(decay_multiplier)
