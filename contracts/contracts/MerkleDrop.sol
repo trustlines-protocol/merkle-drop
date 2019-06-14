@@ -37,7 +37,6 @@ contract MerkleDrop {
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
-        burn(value - valueToSend);
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -63,16 +62,21 @@ contract MerkleDrop {
     }
 
     function burnUnusableTokens() public {
-        require(now >= decayStartTime, "The decay star time has not been reached yet, there is no token to burn.");
+        require(now >= decayStartTime, "The decay start time has not been reached yet, there is no token to burn.");
+        uint decayEndTime = decayStartTime + decayDurationInSeconds;
+        uint remainingDecayTime;
         uint timeToBurn;
         if (lastBurnTime == 0) {
             // We have never burned yet
+            remainingDecayTime = decayDurationInSeconds;
             timeToBurn = now - decayStartTime;
         } else {
+            remainingDecayTime = decayEndTime - lastBurnTime;
             timeToBurn = now - lastBurnTime;
         }
         uint totalEntitlement = droppedToken.balanceOf(address(this));
-        uint totalDecay = decayOverPeriod(totalEntitlement, timeToBurn);
+
+        uint totalDecay = totalEntitlement*(timeToBurn)/(remainingDecayTime);
 
         lastBurnTime = now;
         burn(totalDecay);
