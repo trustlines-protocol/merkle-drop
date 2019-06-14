@@ -305,11 +305,21 @@ def test_everyone_can_withdraw_after_burns(
     time_travel_chain_to_decay_multiplier(decay_multiplier)
     merkle_drop_contract.functions.burnUnusableTokens().transact()
 
+    print(
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        / 1000
+    )
+
     decay_multiplier = 0.5
     time_travel_chain_to_decay_multiplier(decay_multiplier)
     merkle_drop_contract.functions.withdrawFor(
         eligible_address_0, eligible_value_0, proof_0
     ).transact()
+
+    print(
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        / 1000
+    )
 
     decay_multiplier = 0.75
     time_travel_chain_to_decay_multiplier(decay_multiplier)

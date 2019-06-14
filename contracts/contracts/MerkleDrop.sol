@@ -11,6 +11,10 @@ contract MerkleDrop {
     uint public decayDurationInSeconds;
     uint public lastBurnTime;
 
+    uint public initialEntitlement = 15000000;  // just for testing, need to be set in the constructor
+    uint public withdrawnValue;
+    uint public burntTokens;
+
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
@@ -37,6 +41,7 @@ contract MerkleDrop {
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
+        withdrawnValue += value;
 
         // we burn the value not sent that has not been burnt via burnUnusableTokens yet.
         uint valueToBurn;
@@ -45,7 +50,7 @@ contract MerkleDrop {
         } else {
             valueToBurn = value * (now - lastBurnTime)/decayDurationInSeconds;
         }
-        burn(valueToBurn);
+        // burn(valueToBurn);
 
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
@@ -74,31 +79,24 @@ contract MerkleDrop {
     function burnUnusableTokens() public {
         require(now >= decayStartTime, "The decay start time has not been reached yet, there is no token to burn.");
         uint decayEndTime = decayStartTime + decayDurationInSeconds;
-        uint remainingDecayTime;
-        uint timeToBurn;
-
         if (now >= decayEndTime) {
             lastBurnTime = now;
             burn(droppedToken.balanceOf(address(this)));
             return;
         }
 
-        if (lastBurnTime == 0) {
-            // We have never burned yet
-            remainingDecayTime = decayDurationInSeconds;
-            timeToBurn = now - decayStartTime;
-        } else {
-            remainingDecayTime = decayEndTime - lastBurnTime;
-            timeToBurn = now - lastBurnTime;
-        }
+        uint remainingValue = initialEntitlement - withdrawnValue;
+        uint decayedRemainingValue = remainingValue - decay(remainingValue, now - decayStartTime, decayDurationInSeconds);
+        // need to check whether rounding errors burns too much or not enough
 
-        uint totalEntitlement = droppedToken.balanceOf(address(this));
-        // We burn the fraction of the total held token corresponding to the fraction of elapsed time over remaining time
-        uint totalDecay = decay(totalEntitlement, timeToBurn, remainingDecayTime);
-        assert(totalDecay <= totalEntitlement);
+        uint currentBalance = droppedToken.balanceOf(address(this));
 
-        lastBurnTime = now;
-        burn(totalDecay);
+        uint toBurn = currentBalance - decayedRemainingValue;
+
+        burntTokens += toBurn;
+
+        burn(toBurn);
+        return;
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
