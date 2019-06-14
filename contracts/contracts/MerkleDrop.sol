@@ -55,7 +55,7 @@ contract MerkleDrop {
             return 0;
         } else {
             uint timeDecayed = time - decayStartTime;
-            uint valueDecay = decayOverPeriod(value, timeDecayed);
+            uint valueDecay = decay(value, timeDecayed, decayDurationInSeconds);
             assert(valueDecay <= value);
             return value - valueDecay;
         }
@@ -66,6 +66,7 @@ contract MerkleDrop {
         uint decayEndTime = decayStartTime + decayDurationInSeconds;
         uint remainingDecayTime;
         uint timeToBurn;
+
         if (lastBurnTime == 0) {
             // We have never burned yet
             remainingDecayTime = decayDurationInSeconds;
@@ -74,9 +75,11 @@ contract MerkleDrop {
             remainingDecayTime = decayEndTime - lastBurnTime;
             timeToBurn = now - lastBurnTime;
         }
-        uint totalEntitlement = droppedToken.balanceOf(address(this));
 
-        uint totalDecay = totalEntitlement*(timeToBurn)/(remainingDecayTime);
+        uint totalEntitlement = droppedToken.balanceOf(address(this));
+        // We burn the fraction of the total held token corresponding to the fraction of elapsed time over remaining time
+        uint totalDecay = decay(totalEntitlement, timeToBurn, remainingDecayTime);
+        assert(totalDecay <= totalEntitlement);
 
         lastBurnTime = now;
         burn(totalDecay);
@@ -105,7 +108,7 @@ contract MerkleDrop {
         droppedToken.burn(value);
     }
 
-    function decayOverPeriod(uint value, uint time) internal view returns (uint) {
-        return value * time / decayDurationInSeconds;
+    function decay(uint value, uint timeToDecay, uint totalDecayTime) internal pure returns (uint) {
+        return value*timeToDecay/totalDecayTime;
     }
 }
