@@ -152,17 +152,13 @@ def test_entitlement_with_decay(
 def test_withdraw_with_decay(
     merkle_drop_contract,
     dropped_token_contract,
-    chain,
-    decay_start_time,
-    decay_duration,
+    time_travel_chain_to_decay_multiplier,
     decay_multiplier,
     eligible_address_0,
     eligible_value_0,
     proof_0,
 ):
-    time = int(decay_start_time + decay_duration * decay_multiplier)
-    chain.time_travel(time)
-    chain.mine_block()
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     merkle_drop_contract.functions.withdrawFor(
         eligible_address_0, eligible_value_0, proof_0
@@ -186,18 +182,14 @@ def test_entitlement_after_decay(
 
 def test_withdraw_after_decay(
     merkle_drop_contract,
-    chain,
-    decay_start_time,
-    decay_duration,
+    time_travel_chain_to_decay_multiplier,
     eligible_address_0,
     eligible_value_0,
     proof_0,
 ):
 
     decay_multiplier = 2
-    time = int(decay_start_time + decay_duration * decay_multiplier)
-    chain.time_travel(time)
-    chain.mine_block()
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
         merkle_drop_contract.functions.withdrawFor(
@@ -209,15 +201,10 @@ def test_withdraw_after_decay(
 def test_burn_unusable_tokens(
     merkle_drop_contract,
     dropped_token_contract,
-    chain,
-    decay_start_time,
-    decay_duration,
+    time_travel_chain_to_decay_multiplier,
     decay_multiplier,
 ):
-
-    time = int(decay_start_time + decay_duration * decay_multiplier)
-    chain.time_travel(time)
-    chain.mine_block()
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     balance_before = dropped_token_contract.functions.balanceOf(
         merkle_drop_contract.address
