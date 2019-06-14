@@ -330,3 +330,28 @@ def test_everyone_can_withdraw_after_burns(
         dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
         == 0
     )
+
+
+def test_burn_enough_token(
+    merkle_drop_contract,
+    dropped_token_contract,
+    eligible_address_0,
+    eligible_value_0,
+    proof_0,
+    time_travel_chain_to_decay_multiplier,
+    premint_token_value,
+):
+    # test whether the value of token we burn is the maximum value we can burn.
+
+    decay_multiplier = 0.5
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    merkle_drop_contract.functions.withdrawFor(
+        eligible_address_0, eligible_value_0, proof_0
+    ).transact()
+
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+
+    assert (
+        dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        == (premint_token_value - eligible_value_0) * 0.5
+    )

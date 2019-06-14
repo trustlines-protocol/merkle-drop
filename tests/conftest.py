@@ -65,7 +65,7 @@ def premint_token_owner(accounts):
 
 @pytest.fixture(scope="session")
 def premint_token_value():
-    # The returned value should be higher than the dropped value: see values in `tree_data`
+    # The returned value should be equal to the dropped value: see values in `tree_data`
     return 15_000_000
 
 

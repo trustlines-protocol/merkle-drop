@@ -37,6 +37,16 @@ contract MerkleDrop {
         require(valueToSend != 0, "The decayed entitled value is now null.");
 
         withdrawn[recipient] = true;
+
+        // we burn the value not sent that has not been burnt via burnUnusableTokens yet.
+        uint valueToBurn;
+        if (lastBurnTime == 0) {
+            valueToBurn = value - valueToSend;
+        } else {
+            valueToBurn = value * (now - lastBurnTime)/decayDurationInSeconds;
+        }
+        burn(valueToBurn);
+
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
