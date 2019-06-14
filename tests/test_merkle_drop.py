@@ -217,6 +217,20 @@ def test_burn_unusable_tokens(
     assert balance_after == (1 - decay_multiplier) * balance_before
 
 
+def test_burn_tokens_after_decay_duration(
+    merkle_drop_contract, dropped_token_contract, time_travel_chain_to_decay_multiplier
+):
+    decay_multiplier = 2
+    time_travel_chain_to_decay_multiplier(decay_multiplier)
+
+    merkle_drop_contract.functions.burnUnusableTokens().transact()
+    balance = dropped_token_contract.functions.balanceOf(
+        merkle_drop_contract.address
+    ).call()
+
+    assert balance == 0
+
+
 @pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75])
 def test_withdraw_after_burn(
     merkle_drop_contract,

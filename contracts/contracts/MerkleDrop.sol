@@ -67,6 +67,12 @@ contract MerkleDrop {
         uint remainingDecayTime;
         uint timeToBurn;
 
+        if (now >= decayEndTime) {
+            lastBurnTime = now;
+            burn(droppedToken.balanceOf(address(this)));
+            return;
+        }
+
         if (lastBurnTime == 0) {
             // We have never burned yet
             remainingDecayTime = decayDurationInSeconds;
