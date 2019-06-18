@@ -12,7 +12,8 @@ contract MerkleDrop {
 
     uint public initialBalance;
     uint public withdrawnValue;  // The total not decayed withdrawn initial entitlements
-    uint public spentTokens;  // The total tokens spent by the contract, burnt or withdrawn
+    uint remainingValue;         // The total not decayed initial value not withdrawn yet
+    uint public tokensBurnt;     // tokens that have already been burned from the remainingValue
 
     mapping (address => bool) withdrawn;
 
@@ -22,6 +23,8 @@ contract MerkleDrop {
     constructor(DroppedToken _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
         initialBalance = _initialBalance;
+        remainingValue = _initialBalance;
+        tokensBurnt = 0;
         root = _root;
         decayStartTime = _decayStartTime;
         decayDurationInSeconds = _decayDurationInSeconds;
@@ -41,10 +44,14 @@ contract MerkleDrop {
         assert(valueToSend <= value);
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
         require(valueToSend != 0, "The decayed entitled value is now null.");
+        require(value <= remainingValue, "The MerkleDrop has not enough tokens to withdraw.");
 
         withdrawn[recipient] = true;
+        // Move the value and the decayed part of that value from remainingValue/tokensBurnt to withdrawnValue
+        // We currently do not keep track of the burnt part of the tokens that have been withdrawn
         withdrawnValue += value;
-        spentTokens += valueToSend;
+        remainingValue -= value;
+        tokensBurnt -= value - valueToSend;
 
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
@@ -75,13 +82,12 @@ contract MerkleDrop {
             return;
         }
 
-        uint remainingValue = initialBalance - withdrawnValue;
-        uint decayedRemainingValue = remainingValue - decay(remainingValue, now - decayStartTime, decayDurationInSeconds);
+        uint tokensBurntDesired = decay(remainingValue, now - decayStartTime, decayDurationInSeconds);
+        assert(tokensBurntDesired >= tokensBurnt);
+        assert(tokensBurntDesired <= remainingValue);
 
-        assert(decayedRemainingValue + spentTokens <= initialBalance);
-        uint toBurn = initialBalance - decayedRemainingValue - spentTokens;
-
-        spentTokens += toBurn;
+        uint toBurn = tokensBurntDesired - tokensBurnt;
+        tokensBurnt += toBurn;
         burn(toBurn);
     }
 
