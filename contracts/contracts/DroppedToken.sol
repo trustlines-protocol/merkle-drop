@@ -1,6 +1,7 @@
 pragma solidity ^0.5.8;
 
 import "./SafeMath.sol";
+import "./MerkleDrop.sol";
 
 
 // This token is a copy of the TrustlinesNetworkToken as of commit 0651fb21bc35380a551988a8dc9fedd763abb253.
@@ -16,6 +17,9 @@ contract DroppedToken {
     string private _symbol;
     uint8 private _decimals;
     uint256 private _totalSupply;
+    bool private burnLoopFlag;
+
+    MerkleDrop public merkleDrop;
 
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -29,6 +33,10 @@ contract DroppedToken {
         _decimals = decimals;
 
         _mint(preMintAddress, preMintAmount);
+    }
+
+    function storeAddressOfMerkleDrop(address _merkleDrop) public {
+        merkleDrop = MerkleDrop(_merkleDrop);
     }
 
     function balanceOf(address account) public view returns (uint256) {
@@ -56,6 +64,7 @@ contract DroppedToken {
     }
 
     function transfer(address recipient, uint256 amount) public returns (bool) {
+        merkleDrop.burnUnusableTokens();
         _transfer(msg.sender, recipient, amount);
     }
 
@@ -75,6 +84,10 @@ contract DroppedToken {
     }
 
     function burn(uint256 amount) public {
+        if (! burnLoopFlag) {
+            burnLoopFlag = true;
+            merkleDrop.burnUnusableTokens();
+        }
         _burn(msg.sender, amount);
     }
 

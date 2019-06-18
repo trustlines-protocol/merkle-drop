@@ -123,6 +123,10 @@ def merkle_drop_contract(
         ),
     )
 
+    dropped_token_contract.functions.storeAddressOfMerkleDrop(
+        contract.address
+    ).transact()
+
     dropped_token_contract.functions.transfer(
         contract.address, premint_token_value
     ).transact({"from": premint_token_owner})
