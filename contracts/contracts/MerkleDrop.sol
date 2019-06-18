@@ -11,17 +11,17 @@ contract MerkleDrop {
     uint public decayDurationInSeconds;
     uint public lastBurnTime;
 
-    uint public initialEntitlement = 15000000;  // just for testing, need to be set in the constructor
-    uint public withdrawnValue;  // The total not decayed withdrawn entitlements
-    uint public burntTokens;  // the total burnt tokens
+    uint public initialEntitlement;
+    uint public withdrawnValue;  // The total not decayed withdrawn initial entitlements
 
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
     event Burn(uint value);
 
-    constructor(DroppedToken _droppedToken, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
+    constructor(DroppedToken _droppedToken, uint _initialEntitlement, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
+        initialEntitlement = _initialEntitlement;
         root = _root;
         decayStartTime = _decayStartTime;
         decayDurationInSeconds = _decayDurationInSeconds;
@@ -85,8 +85,6 @@ contract MerkleDrop {
         // resulting in burning tokens based on the wrong balance, thus burning too many tokens.
         uint currentBalance = droppedToken.balanceOf(address(this)) - valueToWithdraw;
         uint toBurn = currentBalance - decayedRemainingValue;
-
-        burntTokens += toBurn;
 
         burn(toBurn);
         return;

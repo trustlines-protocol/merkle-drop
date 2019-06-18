@@ -116,6 +116,7 @@ def merkle_drop_contract(
         "MerkleDrop",
         constructor_args=(
             dropped_token_contract.address,
+            premint_token_value,
             root_hash_for_tree_data,
             decay_start_time,
             decay_duration,
