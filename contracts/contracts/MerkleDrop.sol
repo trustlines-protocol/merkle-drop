@@ -9,19 +9,19 @@ contract MerkleDrop {
     DroppedToken public droppedToken;
     uint public decayStartTime;
     uint public decayDurationInSeconds;
-    uint public lastBurnTime;
 
-    uint public initialEntitlement;
+    uint public initialBalance;
     uint public withdrawnValue;  // The total not decayed withdrawn initial entitlements
+    uint public spentTokens;  // The total tokens spent by the contract, burnt or withdrawn
 
     mapping (address => bool) withdrawn;
 
     event Withdraw(address recipient, uint value);
     event Burn(uint value);
 
-    constructor(DroppedToken _droppedToken, uint _initialEntitlement, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
+    constructor(DroppedToken _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         droppedToken = _droppedToken;
-        initialEntitlement = _initialEntitlement;
+        initialBalance = _initialBalance;
         root = _root;
         decayStartTime = _decayStartTime;
         decayDurationInSeconds = _decayDurationInSeconds;
@@ -35,6 +35,8 @@ contract MerkleDrop {
         require(verifyEntitled(recipient, value, proof), "The proof could not be verified.");
         require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
 
+        burnUnusableTokens();
+
         uint valueToSend = decayedEntitlementAtTime(value, now);
         assert(valueToSend <= value);
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
@@ -42,8 +44,8 @@ contract MerkleDrop {
 
         withdrawn[recipient] = true;
         withdrawnValue += value;
+        spentTokens += valueToSend;
 
-        burnUnusableTokensDuringWithdraw(valueToSend);
         droppedToken.transfer(recipient, valueToSend);
         emit Withdraw(recipient, value);
     }
@@ -69,25 +71,18 @@ contract MerkleDrop {
     }
 
     function burnUnusableTokens() public {
-        burnUnusableTokensDuringWithdraw(0);
-    }
-
-    function burnUnusableTokensDuringWithdraw(uint valueToWithdraw) internal {
         if (now <= decayStartTime) {
             return;
         }
 
-        uint remainingValue = initialEntitlement - withdrawnValue;
+        uint remainingValue = initialBalance - withdrawnValue;
         uint decayedRemainingValue = remainingValue - decay(remainingValue, now - decayStartTime, decayDurationInSeconds);
 
-        // We need to update the balance of the contract to take into account the potential ongoing withdraw.
-        // Otherwise, we have a re-entrancy vulnerability where a withdraw in the token contract could call the burn function before transferring tokens
-        // resulting in burning tokens based on the wrong balance, thus burning too many tokens.
-        uint currentBalance = droppedToken.balanceOf(address(this)) - valueToWithdraw;
-        uint toBurn = currentBalance - decayedRemainingValue;
+        assert(decayedRemainingValue + spentTokens <= initialBalance);
+        uint toBurn = initialBalance - decayedRemainingValue - spentTokens;
 
+        spentTokens += toBurn;
         burn(toBurn);
-        return;
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
