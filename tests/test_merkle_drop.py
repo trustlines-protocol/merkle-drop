@@ -2,6 +2,7 @@ import pytest
 
 import eth_tester.exceptions
 from eth_utils import to_checksum_address
+from web3.exceptions import BadFunctionCallOutput
 
 
 @pytest.fixture()
@@ -355,3 +356,30 @@ def test_burn_enough_token(
         dropped_token_contract.functions.balanceOf(merkle_drop_contract.address).call()
         == (premint_token_value - eligible_value_0) * 0.5
     )
+
+
+def test_self_destruct(
+    merkle_drop_contract_already_withdrawn,
+    eligible_address_0,
+    time_travel_chain_to_decay_multiplier,
+):
+    time_travel_chain_to_decay_multiplier(1)
+    assert (
+        merkle_drop_contract_already_withdrawn.functions.withdrawn(
+            eligible_address_0
+        ).call()
+        is True
+    )
+
+    merkle_drop_contract_already_withdrawn.functions.deleteContract().transact()
+
+    with pytest.raises(BadFunctionCallOutput):
+        # The contract is not there anymore, so the function call will fail
+        merkle_drop_contract_already_withdrawn.functions.withdrawn(
+            eligible_address_0
+        ).call()
+
+
+def test_self_destruct_too_soon(merkle_drop_contract):
+    with pytest.raises(eth_tester.exceptions.TransactionFailed):
+        merkle_drop_contract.functions.deleteContract().transact()

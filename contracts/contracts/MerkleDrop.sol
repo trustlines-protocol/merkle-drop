@@ -14,7 +14,7 @@ contract MerkleDrop {
     uint public remainingValue;  // The total not decayed not withdrawn entitlements
     uint public spentTokens;  // The total tokens spent by the contract, burnt or withdrawn
 
-    mapping (address => bool) withdrawn;
+    mapping (address => bool) public withdrawn;
 
     event Withdraw(address recipient, uint value);
     event Burn(uint value);
@@ -86,6 +86,13 @@ contract MerkleDrop {
 
         spentTokens += toBurn;
         burn(toBurn);
+    }
+
+    function deleteContract() public {
+        require(now >= decayStartTime + decayDurationInSeconds, "The storage cannot be deleted before the end of the merkle drop.");
+        burnUnusableTokens();
+
+        selfdestruct(address(0));
     }
 
     function verifyProof(bytes32 leaf, bytes32[] memory proof) internal view returns (bool) {
