@@ -12,6 +12,8 @@ B_ADDRESS = b"\xbb" * 20
 C_ADDRESS = b"\xcc" * 20
 D_ADDRESS = b"\xdd" * 20
 
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
 
 AIRDROP_DATA = {A_ADDRESS: 10, B_ADDRESS: 20, D_ADDRESS: 30}
 
@@ -124,3 +126,25 @@ def test_not_existing_merkle_proof_cli(runner, airdrop_list_file):
         main, ["proof", to_checksum_address(C_ADDRESS), str(airdrop_list_file)]
     )
     assert result.exit_code == 1
+
+
+def test_deploy_cli(runner, airdrop_list_file):
+    result = runner.invoke(
+        main,
+        args=f"deploy --jsonrpc test --token-address {ZERO_ADDRESS} "
+        f"--airdrop-file {airdrop_list_file} --decay-start-time 123456789",
+    )
+
+    print(result.output)
+    assert result.exit_code == 0
+
+
+def test_deploy_cli_with_date(runner, airdrop_list_file):
+    result = runner.invoke(
+        main,
+        args=f"deploy --jsonrpc test --token-address {ZERO_ADDRESS} "
+        f"--airdrop-file {airdrop_list_file} --decay-start-date 2020-12-12",
+    )
+
+    print(result.output)
+    assert result.exit_code == 0

@@ -38,7 +38,6 @@ ipfshttpclient==0.4.12
 jsonschema==2.6.0
 lru-dict==1.1.6
 mccabe==0.6.1
--e git+git@github.com:trustlines-protocol/merkle-drop.git@e59516dbdcce6b109e47523babee617f12dd913b#egg=merkle_drop
 more-itertools==7.0.0
 multiaddr==0.0.8
 mypy==0.701

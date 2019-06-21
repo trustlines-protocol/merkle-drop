@@ -70,9 +70,7 @@ def premint_token_value():
 
 
 @pytest.fixture(scope="session")
-def dropped_token_contract(
-    deploy_contract, root_hash_for_tree_data, premint_token_owner, premint_token_value
-):
+def dropped_token_contract(deploy_contract, premint_token_owner, premint_token_value):
     # A token contract with premint token for the merkle drop.
     # The tokens are transferred to the MerkleDrop upon deployment of MerkleDrop.
     contract = deploy_contract(

@@ -90,7 +90,7 @@ def proof(address: bytes, airdrop_file_name: str) -> None:
 @auto_nonce_option
 @jsonrpc_option
 @click.option(
-    "token-address",
+    "--token-address",
     help='The address of the airdropped token contract, "0x" prefixed string',
     type=str,
     required=True,
@@ -98,7 +98,7 @@ def proof(address: bytes, airdrop_file_name: str) -> None:
 )
 @click.option(
     "--airdrop-file",
-    "aidrop_file_name",
+    "airdrop_file_name",
     help="The path to the airdrop file containing the addresses and values to airdrop",
     type=click.Path(exists=True, dir_okay=False),
     required=True,
@@ -164,11 +164,12 @@ def deploy(
     )
 
     airdrop_data = load_airdrop_file(airdrop_file_name)
-    merkle_root = compute_merkle_root(to_items(airdrop_data))
+    airdrop_items = to_items(airdrop_data)
+    merkle_root = compute_merkle_root(airdrop_items)
 
     constructor_args = (
         token_address,
-        sum_of_airdropped_tokens(airdrop_data),
+        sum_of_airdropped_tokens(airdrop_items),
         merkle_root,
         decay_start_time,
         decay_duration,
@@ -181,5 +182,5 @@ def deploy(
         constructor_args=constructor_args,
     )
 
-    click.echo("MerkleDrop address: " + merkle_drop.address)
-    click.echo("Merkle root: " + merkle_root)
+    click.echo(f"MerkleDrop address: {merkle_drop.address}")
+    click.echo(f"Merkle root: {encode_hex(merkle_root)}")
