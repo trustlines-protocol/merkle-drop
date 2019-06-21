@@ -30,6 +30,6 @@ def deploy_merkle_drop(
 
 def sum_of_airdropped_tokens(airdrop_data):
     sum = 0
-    for address, value in airdrop_data:
-        sum += value
+    for item in airdrop_data:
+        sum += item.value
     return sum
