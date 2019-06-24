@@ -10,8 +10,7 @@ test: install
 
 compile: install-requirements
 	$(VIRTUAL_ENV)/bin/deploy-tools compile --evm-version petersburg -d ./contracts/contracts
-	cp build/contracts.json merkle_drop/contracts.json
-	cp build/contracts.json tests/helper/contracts.json
+	$(VIRTUAL_ENV)/bin/python scripts/pack_contracts.py build/contracts.json merkle_drop/contracts.json
 
 
 build: compile
