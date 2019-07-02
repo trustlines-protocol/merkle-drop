@@ -11,3 +11,7 @@ Example for `airdrop.csv`:
 0xa1F7A26e4729de760D6074063F25054b4fA7bAb2,20
 0x2147a30412206c6A39c7bf8aF10903020419024d,15
 ```
+
+## Requirements
+
+- solidity compiler >= v0.5.8
