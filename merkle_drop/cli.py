@@ -19,6 +19,7 @@ from .airdrop import get_item, to_items, get_balance
 from .load_csv import load_airdrop_file
 from .merkle_tree import compute_merkle_root, build_tree, create_proof
 from .deploy import deploy_merkle_drop, sum_of_airdropped_tokens
+from .server import start_server
 
 
 def validate_address(ctx, param, value):
@@ -46,6 +47,18 @@ airdrop_file_argument = click.argument(
 @click.group()
 def main():
     pass
+
+
+@main.command(short_help="Start backend server")
+@airdrop_file_argument
+@click.option(
+    "--hostname", "hostname", help="The hostname to listen on", type=str, required=False
+)
+@click.option("--port", "port", help="The port to listen on)", type=int, required=False)
+def server(airdrop_file_name: str, hostname: str, port: int) -> None:
+
+    airdrop_data = load_airdrop_file(airdrop_file_name)
+    start_server(airdrop_data, hostname, port)
 
 
 @main.command(short_help="Compute Merkle root")
