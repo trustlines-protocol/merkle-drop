@@ -19,6 +19,7 @@ from .airdrop import get_item, to_items, get_balance
 from .load_csv import load_airdrop_file
 from .merkle_tree import compute_merkle_root, build_tree, create_proof
 from .deploy import deploy_merkle_drop, sum_of_airdropped_tokens
+from .server import start_server
 
 
 def validate_address(ctx, param, value):
@@ -48,6 +49,18 @@ def main():
     pass
 
 
+@main.command(short_help="Start backend server")
+@airdrop_file_argument
+@click.option(
+    "--hostname", "hostname", help="The hostname to listen on", type=str, required=False
+)
+@click.option("--port", "port", help="The port to listen on)", type=int, required=False)
+def server(airdrop_file_name: str, hostname: str, port: int) -> None:
+
+    airdrop_data = load_airdrop_file(airdrop_file_name)
+    start_server(airdrop_data, hostname, port)
+
+
 @main.command(short_help="Compute Merkle root")
 @airdrop_file_argument
 def root(airdrop_file_name: str) -> None:
@@ -73,13 +86,14 @@ def balance(address: bytes, airdrop_file_name: str) -> None:
 @click.argument("address", callback=validate_address)
 @airdrop_file_argument
 def proof(address: bytes, airdrop_file_name: str) -> None:
-
     airdrop_data = load_airdrop_file(airdrop_file_name)
-    proof = create_proof(
-        get_item(address, airdrop_data), build_tree(to_items(airdrop_data))
-    )
-
-    click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
+    try:
+        proof = create_proof(
+            get_item(address, airdrop_data), build_tree(to_items(airdrop_data))
+        )
+        click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
+    except KeyError as e:
+        raise click.BadParameter(f"The address is not eligible to get a proof") from e
 
 
 @main.command(short_help="Deploy the MerkleDrop contract")

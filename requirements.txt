@@ -10,3 +10,4 @@ black
 pre-commit
 contract-deploy-tools
 pendulum
+flask
