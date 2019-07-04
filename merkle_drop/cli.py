@@ -86,13 +86,16 @@ def balance(address: bytes, airdrop_file_name: str) -> None:
 @click.argument("address", callback=validate_address)
 @airdrop_file_argument
 def proof(address: bytes, airdrop_file_name: str) -> None:
-
     airdrop_data = load_airdrop_file(airdrop_file_name)
-    proof = create_proof(
-        get_item(address, airdrop_data), build_tree(to_items(airdrop_data))
-    )
-
-    click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
+    try:
+        proof = create_proof(
+            get_item(address, airdrop_data), build_tree(to_items(airdrop_data))
+        )
+        click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
+    except KeyError as e:
+        raise click.BadParameter(
+            f'The address is not eligible to get a proof'
+        ) from e
 
 
 @main.command(short_help="Deploy the MerkleDrop contract")
