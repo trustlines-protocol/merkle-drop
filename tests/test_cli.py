@@ -125,7 +125,7 @@ def test_not_existing_merkle_proof_cli(runner, airdrop_list_file):
     result = runner.invoke(
         main, ["proof", to_checksum_address(C_ADDRESS), str(airdrop_list_file)]
     )
-    assert result.exit_code == 1
+    assert result.exit_code == 2
 
 
 def test_deploy_cli(runner, airdrop_list_file):
