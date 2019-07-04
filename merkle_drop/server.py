@@ -39,7 +39,7 @@ def get_airdrop_for(address):
     return jsonify(
         {
             "address": address,
-            "eligible_token_balance": eligible_tokens,
+            "eligibleTokenBalance": eligible_tokens,
             "proof": [encode_hex(hash_) for hash_ in proof],
         }
     )
