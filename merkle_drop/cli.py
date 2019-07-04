@@ -93,9 +93,7 @@ def proof(address: bytes, airdrop_file_name: str) -> None:
         )
         click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
     except KeyError as e:
-        raise click.BadParameter(
-            f'The address is not eligible to get a proof'
-        ) from e
+        raise click.BadParameter(f"The address is not eligible to get a proof") from e
 
 
 @main.command(short_help="Deploy the MerkleDrop contract")
