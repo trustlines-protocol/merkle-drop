@@ -25,8 +25,8 @@ def internal_server_error(e):
     return jsonify(error=500, message="There was an internal server error"), 500
 
 
-@app.route("/airdrop/<string:address>", methods=["GET"])
-def get_airdrop_for(address):
+@app.route("/entitlement/<string:address>", methods=["GET"])
+def get_entitlement_for(address):
     if not is_checksum_address(address):
         abort(400, "The address is not in checksum-case or invalid")
     canonical_address = to_canonical_address(address)
@@ -39,7 +39,7 @@ def get_airdrop_for(address):
     return jsonify(
         {
             "address": address,
-            "eligibleTokenBalance": eligible_tokens,
+            "originalTokenBalance": eligible_tokens,
             "proof": [encode_hex(hash_) for hash_ in proof],
         }
     )
