@@ -1,13 +1,20 @@
 from flask import Flask
 from flask import jsonify, abort
 from typing import Dict
-from .airdrop import get_item, to_items, get_balance
-from .merkle_tree import create_proof, build_tree
+from merkle_drop.airdrop import get_item, to_items, get_balance
+from merkle_drop.merkle_tree import create_proof, build_tree
+from merkle_drop.load_csv import load_airdrop_file
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
+import configparser
+
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 app = Flask("Merkle Airdrop Backend Server")
-airdrop_dict = None
-airdrop_tree = None
+airdrop_dict = load_airdrop_file(config["trustlines.merkle"]["AirdropFileName"])
+airdrop_tree = build_tree(to_items(airdrop_dict))
+decay_start_time = config["trustlines.merkle"]["DecayStartTime"]
+decay_duration_in_seconds = config["trustlines.merkle"]["DecayDurationInSeconds"]
 
 
 @app.errorhandler(404)
@@ -45,9 +52,5 @@ def get_entitlement_for(address):
     )
 
 
-def start_server(airdrop_data: Dict[bytes, int], hostname: str, port: int) -> None:
-    global airdrop_dict
-    airdrop_dict = airdrop_data
-    global airdrop_tree
-    airdrop_tree = build_tree(to_items(airdrop_dict))
-    app.run(host=hostname, port=port)
+if __name__ == "__main__":
+    app.run(host=config["flask"]["Host"], port=config["flask"]["Port"])
