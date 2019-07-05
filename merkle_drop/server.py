@@ -68,6 +68,11 @@ def decay_tokens(tokens: int) -> int:
     else:
         time_decayed = now - decay_start_time
         decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
+        if decay > tokens:
+            abort(
+                400,
+                "There was an internal error calculating the eligible tokens. Please contact the trustlines team.",
+            )
         return tokens - decay
 
 
