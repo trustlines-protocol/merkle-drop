@@ -6,15 +6,20 @@ from merkle_drop.merkle_tree import create_proof, build_tree
 from merkle_drop.load_csv import load_airdrop_file
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
 import configparser
+import time
+import math
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-app = Flask("Merkle Airdrop Backend Server")
-airdrop_dict = load_airdrop_file(config["trustlines.merkle"]["AirdropFileName"])
+airdrop_dict = load_airdrop_file(config.get("trustlines.merkle", "AirdropFileName"))
 airdrop_tree = build_tree(to_items(airdrop_dict))
-decay_start_time = config["trustlines.merkle"]["DecayStartTime"]
-decay_duration_in_seconds = config["trustlines.merkle"]["DecayDurationInSeconds"]
+decay_start_time = int(config.get("trustlines.merkle", "DecayStartTime"))
+decay_duration_in_seconds = int(
+    config.get("trustlines.merkle", "DecayDurationInSeconds")
+)
+
+app = Flask("Merkle Airdrop Backend Server")
 
 
 @app.errorhandler(404)
@@ -42,15 +47,33 @@ def get_entitlement_for(address):
     if eligible_tokens == 0:
         abort(404)
     proof = create_proof(get_item(canonical_address, airdrop_dict), airdrop_tree)
-    # TODO: apply decay function on tokens
+    decayed_tokens = decay_tokens(eligible_tokens)
     return jsonify(
         {
             "address": address,
             "originalTokenBalance": eligible_tokens,
+            "currentTokenBalance": decayed_tokens,
             "proof": [encode_hex(hash_) for hash_ in proof],
         }
     )
 
 
+# See also MerkleDrop.sol:61
+def decay_tokens(tokens: int) -> int:
+    now = int(time.time())
+    if now <= decay_start_time:
+        return tokens
+    elif now >= decay_start_time + decay_duration_in_seconds:
+        return 0
+    else:
+        time_decayed = now - decay_start_time
+        decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
+        return tokens - decay
+
+
 if __name__ == "__main__":
-    app.run(host=config["flask"]["Host"], port=config["flask"]["Port"])
+    app.run(
+        debug=True,
+        host=config.get("flask", "Host", fallback="0.0.0.0"),
+        port=config.get("flask", "Port", fallback=5000),
+    )
