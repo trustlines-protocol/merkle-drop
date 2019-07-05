@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import jsonify, abort
-from typing import Dict
 from merkle_drop.airdrop import get_item, to_items, get_balance
 from merkle_drop.merkle_tree import create_proof, build_tree
 from merkle_drop.load_csv import load_airdrop_file
@@ -77,8 +76,4 @@ def decay_tokens(tokens: int) -> int:
 
 
 if __name__ == "__main__":
-    app.run(
-        debug=True,
-        host=config.get("flask", "Host", fallback="0.0.0.0"),
-        port=config.get("flask", "Port", fallback=5000),
-    )
+    app.run(host=config.get("flask", "Host"), port=int(config.get("flask", "Port")))
