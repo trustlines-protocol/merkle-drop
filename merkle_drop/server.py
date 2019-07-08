@@ -12,7 +12,11 @@ from merkle_drop.airdrop import to_items
 app = Flask("Merkle Airdrop Backend Server")
 
 
-def init(airdrop_filename: str, decay_start_time_param: int, decay_duration_in_seconds_param: int):
+def init(
+    airdrop_filename: str,
+    decay_start_time_param: int,
+    decay_duration_in_seconds_param: int,
+):
     global airdrop_dict
     global airdrop_tree
     global decay_start_time
@@ -69,5 +73,5 @@ def decay_tokens(tokens: int) -> int:
     else:
         time_decayed = now - decay_start_time
         decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
-        assert(decay <= tokens)
+        assert decay <= tokens
         return tokens - decay
