@@ -12,6 +12,29 @@ Example for `airdrop.csv`:
 0x2147a30412206c6A39c7bf8aF10903020419024d,15
 ```
 
+## Backend-Server
+
+Best was to start the backend server is to use gunicorn as a WSGI-container:
+```
+pip install gunicorn
+gunicorn -c config.py merkle_drop.server:app
+```
+
+Here is an example config file:
+```
+from merkle_drop.server import init
+
+bind = "127.0.0.1:1234"
+
+airdrop_filename = "airdrop.csv"
+decay_start_time = 1559719024
+decay_duration_in_seconds = 5184000
+
+
+def on_starting(server):
+    init(airdrop_filename, decay_start_time, decay_duration_in_seconds)
+```
+
 ## Requirements
 
 - solidity compiler >= v0.5.8
