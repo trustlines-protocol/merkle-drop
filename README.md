@@ -14,7 +14,7 @@ Example for `airdrop.csv`:
 
 ## Backend-Server
 
-Best was to start the backend server is to use gunicorn as a WSGI-container:
+The best way to start the backend server is to use gunicorn as a WSGI-container:
 ```
 pip install gunicorn
 gunicorn -c config.py merkle_drop.server:app
@@ -22,17 +22,21 @@ gunicorn -c config.py merkle_drop.server:app
 
 Here is an example config file:
 ```
-from merkle_drop.server import init
+import merkle_drop.server
 
 bind = "127.0.0.1:1234"
-
 airdrop_filename = "airdrop.csv"
 decay_start_time = 1559719024
-decay_duration_in_seconds = 5184000
+decay_duration_in_seconds = 60 * 3600 * 24
+
+workers = 8
+max_requests = 1000
 
 
 def on_starting(server):
-    init(airdrop_filename, decay_start_time, decay_duration_in_seconds)
+    merkle_drop.server.init(
+        airdrop_filename, decay_start_time, decay_duration_in_seconds
+    )
 ```
 
 ## Requirements
