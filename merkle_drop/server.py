@@ -1,7 +1,6 @@
 from flask import Flask
 from flask import jsonify, abort
 from merkle_drop.airdrop import get_item, get_balance
-from merkle_drop.merkle_tree import create_proof
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
 import time
 import math
