@@ -1,12 +1,11 @@
-from flask import Flask
-from flask import jsonify, abort
-from merkle_drop.airdrop import get_item, get_balance
-from eth_utils import encode_hex, is_checksum_address, to_canonical_address
 import time
 import math
+from flask import Flask
+from flask import jsonify, abort
+from eth_utils import encode_hex, is_checksum_address, to_canonical_address
+from merkle_drop.airdrop import get_item, get_balance, to_items
 from merkle_drop.load_csv import load_airdrop_file
 from merkle_drop.merkle_tree import create_proof, build_tree
-from merkle_drop.airdrop import to_items
 
 app = Flask("Merkle Airdrop Backend Server")
 
