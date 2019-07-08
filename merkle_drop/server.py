@@ -1,5 +1,7 @@
 import time
 import math
+import logging
+
 from flask import Flask
 from flask import jsonify, abort
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
@@ -15,6 +17,12 @@ decay_start_time = -1
 decay_duration_in_seconds = -1
 
 
+def init_gunicorn_logging():
+    gunicorn_logger = logging.getLogger("gunicorn.error")
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+
 def init(
     airdrop_filename: str,
     decay_start_time_param: int,
@@ -24,6 +32,7 @@ def init(
     global airdrop_tree
     global decay_start_time
     global decay_duration_in_seconds
+    app.logger.info(f"Initializing merkle tree from file {airdrop_filename}")
     airdrop_dict = load_airdrop_file(airdrop_filename)
     airdrop_tree = build_tree(to_items(airdrop_dict))
     decay_start_time = decay_start_time_param

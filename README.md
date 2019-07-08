@@ -34,6 +34,7 @@ max_requests = 1000
 
 
 def on_starting(server):
+    merkle_drop.server.init_gunicorn_logging()
     merkle_drop.server.init(
         airdrop_filename, decay_start_time, decay_duration_in_seconds
     )
