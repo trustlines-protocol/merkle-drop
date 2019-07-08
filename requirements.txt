@@ -11,4 +11,3 @@ pre-commit
 contract-deploy-tools
 pendulum
 flask
-configparser

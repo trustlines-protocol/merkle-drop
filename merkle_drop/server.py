@@ -1,24 +1,26 @@
 from flask import Flask
 from flask import jsonify, abort
-from merkle_drop.airdrop import get_item, to_items, get_balance
-from merkle_drop.merkle_tree import create_proof, build_tree
-from merkle_drop.load_csv import load_airdrop_file
+from merkle_drop.airdrop import get_item, get_balance
+from merkle_drop.merkle_tree import create_proof
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
-import configparser
 import time
 import math
-
-config = configparser.ConfigParser()
-config.read("config.ini")
-
-airdrop_dict = load_airdrop_file(config.get("trustlines.merkle", "AirdropFileName"))
-airdrop_tree = build_tree(to_items(airdrop_dict))
-decay_start_time = int(config.get("trustlines.merkle", "DecayStartTime"))
-decay_duration_in_seconds = int(
-    config.get("trustlines.merkle", "DecayDurationInSeconds")
-)
+from merkle_drop.load_csv import load_airdrop_file
+from merkle_drop.merkle_tree import create_proof, build_tree
+from merkle_drop.airdrop import to_items
 
 app = Flask("Merkle Airdrop Backend Server")
+
+
+def init(airdrop_filename: str, decay_start_time_param: int, decay_duration_in_seconds_param: int):
+    global airdrop_dict
+    global airdrop_tree
+    global decay_start_time
+    global decay_duration_in_seconds
+    airdrop_dict = load_airdrop_file(airdrop_filename)
+    airdrop_tree = build_tree(to_items(airdrop_dict))
+    decay_start_time = decay_start_time_param
+    decay_duration_in_seconds = decay_duration_in_seconds_param
 
 
 @app.errorhandler(404)
@@ -67,9 +69,5 @@ def decay_tokens(tokens: int) -> int:
     else:
         time_decayed = now - decay_start_time
         decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
-        assert(tokens <= decay)
+        assert(decay <= tokens)
         return tokens - decay
-
-
-if __name__ == "__main__":
-    app.run(host=config.get("flask", "Host"), port=int(config.get("flask", "Port")))
