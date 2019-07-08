@@ -11,6 +11,11 @@ from merkle_drop.airdrop import to_items
 
 app = Flask("Merkle Airdrop Backend Server")
 
+airdrop_dict = None
+airdrop_tree = None
+decay_start_time = -1
+decay_duration_in_seconds = -1
+
 
 def init(
     airdrop_filename: str,
