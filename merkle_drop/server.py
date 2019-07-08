@@ -1,13 +1,33 @@
+import time
+import math
 from flask import Flask
 from flask import jsonify, abort
-from typing import Dict
-from .airdrop import get_item, to_items, get_balance
-from .merkle_tree import create_proof, build_tree
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
+from merkle_drop.airdrop import get_item, get_balance, to_items
+from merkle_drop.load_csv import load_airdrop_file
+from merkle_drop.merkle_tree import create_proof, build_tree
 
 app = Flask("Merkle Airdrop Backend Server")
+
 airdrop_dict = None
 airdrop_tree = None
+decay_start_time = -1
+decay_duration_in_seconds = -1
+
+
+def init(
+    airdrop_filename: str,
+    decay_start_time_param: int,
+    decay_duration_in_seconds_param: int,
+):
+    global airdrop_dict
+    global airdrop_tree
+    global decay_start_time
+    global decay_duration_in_seconds
+    airdrop_dict = load_airdrop_file(airdrop_filename)
+    airdrop_tree = build_tree(to_items(airdrop_dict))
+    decay_start_time = decay_start_time_param
+    decay_duration_in_seconds = decay_duration_in_seconds_param
 
 
 @app.errorhandler(404)
@@ -35,19 +55,26 @@ def get_entitlement_for(address):
     if eligible_tokens == 0:
         abort(404)
     proof = create_proof(get_item(canonical_address, airdrop_dict), airdrop_tree)
-    # TODO: apply decay function on tokens
+    decayed_tokens = decay_tokens(eligible_tokens)
     return jsonify(
         {
             "address": address,
             "originalTokenBalance": eligible_tokens,
+            "currentTokenBalance": decayed_tokens,
             "proof": [encode_hex(hash_) for hash_ in proof],
         }
     )
 
 
-def start_server(airdrop_data: Dict[bytes, int], hostname: str, port: int) -> None:
-    global airdrop_dict
-    airdrop_dict = airdrop_data
-    global airdrop_tree
-    airdrop_tree = build_tree(to_items(airdrop_dict))
-    app.run(host=hostname, port=port)
+# See also MerkleDrop.sol:61
+def decay_tokens(tokens: int) -> int:
+    now = int(time.time())
+    if now <= decay_start_time:
+        return tokens
+    elif now >= decay_start_time + decay_duration_in_seconds:
+        return 0
+    else:
+        time_decayed = now - decay_start_time
+        decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
+        assert decay <= tokens
+        return tokens - decay
