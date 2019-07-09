@@ -5,6 +5,8 @@ import logging
 from flask import Flask
 from flask import jsonify, abort
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
+import pendulum
+
 from merkle_drop.airdrop import get_item, get_balance, to_items
 from merkle_drop.load_csv import load_airdrop_file
 from merkle_drop.merkle_tree import create_proof, build_tree
@@ -32,8 +34,15 @@ def init(
     global airdrop_tree
     global decay_start_time
     global decay_duration_in_seconds
+    decay_start = pendulum.from_timestamp(decay_start_time_param)
+    decay_end = pendulum.from_timestamp(
+        decay_start_time_param + decay_duration_in_seconds_param
+    )
+
     app.logger.info(f"Initializing merkle tree from file {airdrop_filename}")
+    app.logger.info(f"Decay from {decay_start} to {decay_end}")
     airdrop_dict = load_airdrop_file(airdrop_filename)
+    app.logger.info(f"Building merkle tree from {len(airdrop_dict)} entries")
     airdrop_tree = build_tree(to_items(airdrop_dict))
     decay_start_time = decay_start_time_param
     decay_duration_in_seconds = decay_duration_in_seconds_param
