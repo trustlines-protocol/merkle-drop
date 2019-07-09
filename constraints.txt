@@ -29,6 +29,7 @@ eth-utils==1.6.0
 ethpm==0.1.4a19
 flake8==3.7.7
 flake8-polyfill==1.0.2
+gunicorn==19.9.0
 hexbytes==0.2.0
 identify==1.4.3
 idna==2.8

@@ -1,12 +1,12 @@
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.9b0
+    rev: 19.3b0
     hooks:
     - id: black
       language_version: python3.6
 
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v2.0.0
+    rev: v2.2.3
     hooks:
     - id: check-added-large-files
     - id: check-ast
@@ -26,7 +26,7 @@ repos:
     - id: no-commit-to-branch
       args: [--branch, develop, --branch, master]
 -   repo: https://github.com/schmir/ethlint-pre-commit.git
-    rev: 'fc4f655fe2ad22a6f3668045a99b5cc1b21f79da'
+    rev: ceedc72aa232b9391840256c7781226a3e238b1a
     hooks:
     - id: ethlint
-      args: ["--config", "contracts/.soliumrc"]
+      args: ["--config", "contracts/.soliumrc.json"]

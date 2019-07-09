@@ -1,6 +1,10 @@
 click
 eth_utils
 eth-hash[pycryptodome]
+pendulum
+flask
+
+gunicorn
 pytest
 pytest-cov
 mypy
@@ -9,5 +13,3 @@ pep8-naming
 black
 pre-commit
 contract-deploy-tools
-pendulum
-flask

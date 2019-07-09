@@ -1,0 +1,9 @@
+#! /usr/bin/env python3
+
+"""generate an airdrop.csv file for testing."""
+
+from eth_account import Account
+
+for num in range(1, 150_000):
+    address = Account.from_key(num.to_bytes(32, "big")).address
+    print(f"{address},{num}")
