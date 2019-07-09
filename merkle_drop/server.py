@@ -71,9 +71,11 @@ def get_entitlement_for(address):
 
     eligible_tokens = get_balance(canonical_address, airdrop_dict)
     if eligible_tokens == 0:
-        abort(404)
-    proof = create_proof(get_item(canonical_address, airdrop_dict), airdrop_tree)
-    decayed_tokens = decay_tokens(eligible_tokens)
+        proof = []
+        decayed_tokens = 0
+    else:
+        proof = create_proof(get_item(canonical_address, airdrop_dict), airdrop_tree)
+        decayed_tokens = decay_tokens(eligible_tokens)
     return jsonify(
         {
             "address": address,
