@@ -10,6 +10,7 @@ setup(
         "eth_utils",
         "eth-hash[pycryptodome]",
         "flask",
+        "flask_cors",
         "pendulum",
     ],
     entry_points="""

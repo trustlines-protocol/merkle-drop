@@ -29,6 +29,8 @@ eth-utils==1.6.0
 ethpm==0.1.4a19
 flake8==3.7.7
 flake8-polyfill==1.0.2
+Flask==1.1.1
+Flask-Cors==3.0.8
 gunicorn==19.9.0
 hexbytes==0.2.0
 identify==1.4.3
@@ -36,8 +38,11 @@ idna==2.8
 importlib-metadata==0.17
 importlib-resources==1.0.2
 ipfshttpclient==0.4.12
+itsdangerous==1.1.0
+Jinja2==2.10.1
 jsonschema==2.6.0
 lru-dict==1.1.6
+MarkupSafe==1.1.1
 mccabe==0.6.1
 more-itertools==7.0.0
 multiaddr==0.0.8
@@ -88,5 +93,6 @@ virtualenv==16.6.0
 wcwidth==0.1.7
 web3==5.0.0b2
 websockets==7.0
+Werkzeug==0.15.4
 wheel==0.33.4
 zipp==0.5.1

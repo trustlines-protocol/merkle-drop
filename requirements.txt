@@ -3,6 +3,7 @@ eth_utils
 eth-hash[pycryptodome]
 pendulum
 flask
+flask_cors
 
 gunicorn
 pytest
