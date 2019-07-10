@@ -4,6 +4,7 @@ import logging
 
 from flask import Flask
 from flask import jsonify, abort
+from flask_cors import CORS
 from eth_utils import encode_hex, is_checksum_address, to_canonical_address
 import pendulum
 
@@ -23,6 +24,19 @@ def init_gunicorn_logging():
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
+
+
+def init_cors(**kwargs):
+    """enable CORS
+
+see https://flask-cors.corydolphin.com/en/latest/api.html#extension
+for allowed kwargs
+
+The default is to allow '*', but one can pass
+e.g. origins='http://example.com' to allow request from one domain
+only."
+"""
+    CORS(app=app, **kwargs)
 
 
 def init(
