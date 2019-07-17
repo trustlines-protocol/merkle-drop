@@ -1,7 +1,9 @@
-from typing import NamedTuple, Optional
 from typing import List
+from typing import NamedTuple
+from typing import Optional
 
-from eth_utils import keccak, is_canonical_address
+from eth_utils import is_canonical_address
+from eth_utils import keccak
 
 
 class Item(NamedTuple):

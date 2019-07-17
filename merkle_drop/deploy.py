@@ -1,7 +1,8 @@
 from typing import Dict
 
+from deploy_tools.deploy import deploy_compiled_contract
+from deploy_tools.deploy import load_contracts_json
 from web3.contract import Contract
-from deploy_tools.deploy import deploy_compiled_contract, load_contracts_json
 
 
 def deploy_merkle_drop(

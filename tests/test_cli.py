@@ -1,10 +1,12 @@
 import pytest
 from click.testing import CliRunner
+from eth_utils import is_hex
+from eth_utils import to_checksum_address
+from eth_utils import to_normalized_address
 
-from eth_utils import to_checksum_address, to_normalized_address, is_hex
-
-from merkle_drop.load_csv import load_airdrop_file, validate_address_value_pairs
 from merkle_drop.cli import main
+from merkle_drop.load_csv import load_airdrop_file
+from merkle_drop.load_csv import validate_address_value_pairs
 
 
 A_ADDRESS = b"\xaa" * 20

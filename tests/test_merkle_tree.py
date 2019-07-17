@@ -1,17 +1,14 @@
 import pytest
-
 from eth_utils import keccak
 
-from merkle_drop.merkle_tree import (
-    build_tree,
-    in_tree,
-    create_proof,
-    validate_proof,
-    compute_parent_hash,
-    compute_leaf_hash,
-    compute_merkle_root,
-    Item,
-)
+from merkle_drop.merkle_tree import build_tree
+from merkle_drop.merkle_tree import compute_leaf_hash
+from merkle_drop.merkle_tree import compute_merkle_root
+from merkle_drop.merkle_tree import compute_parent_hash
+from merkle_drop.merkle_tree import create_proof
+from merkle_drop.merkle_tree import in_tree
+from merkle_drop.merkle_tree import Item
+from merkle_drop.merkle_tree import validate_proof
 
 
 @pytest.fixture

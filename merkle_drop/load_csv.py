@@ -1,7 +1,8 @@
-from typing import Dict
 import csv
+from typing import Dict
 
-from eth_utils import is_checksum_address, to_canonical_address
+from eth_utils import is_checksum_address
+from eth_utils import to_canonical_address
 
 
 def load_airdrop_file(airdrop_file: str) -> Dict[bytes, int]:

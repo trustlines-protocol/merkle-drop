@@ -1,24 +1,28 @@
 import click
-
 import pendulum
-from eth_utils import encode_hex, is_checksum_address, to_canonical_address
-from deploy_tools.cli import (
-    jsonrpc_option,
-    keystore_option,
-    gas_option,
-    gas_price_option,
-    nonce_option,
-    auto_nonce_option,
-    connect_to_json_rpc,
-    retrieve_private_key,
-    get_nonce,
-)
+from deploy_tools.cli import auto_nonce_option
+from deploy_tools.cli import connect_to_json_rpc
+from deploy_tools.cli import gas_option
+from deploy_tools.cli import gas_price_option
+from deploy_tools.cli import get_nonce
+from deploy_tools.cli import jsonrpc_option
+from deploy_tools.cli import keystore_option
+from deploy_tools.cli import nonce_option
+from deploy_tools.cli import retrieve_private_key
 from deploy_tools.deploy import build_transaction_options
+from eth_utils import encode_hex
+from eth_utils import is_checksum_address
+from eth_utils import to_canonical_address
 
-from .airdrop import get_item, to_items, get_balance
+from .airdrop import get_balance
+from .airdrop import get_item
+from .airdrop import to_items
+from .deploy import deploy_merkle_drop
+from .deploy import sum_of_airdropped_tokens
 from .load_csv import load_airdrop_file
-from .merkle_tree import compute_merkle_root, build_tree, create_proof
-from .deploy import deploy_merkle_drop, sum_of_airdropped_tokens
+from .merkle_tree import build_tree
+from .merkle_tree import compute_merkle_root
+from .merkle_tree import create_proof
 
 
 def validate_address(ctx, param, value):
