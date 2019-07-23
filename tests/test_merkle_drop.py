@@ -1,4 +1,5 @@
 import pytest
+import math
 
 import eth_tester.exceptions
 from eth_utils import to_checksum_address
@@ -30,9 +31,31 @@ def time_travel_chain_to_decay_multiplier(chain, decay_start_time, decay_duratio
     def time_travel(decay_multiplier):
         time = int(decay_start_time + decay_duration * decay_multiplier)
         chain.time_travel(time)
-        chain.mine_block()
+        # Mining a block is usually considered here to fix unexpected behaviour with gas estimations
+        # but that would make the chain time_travel past the exact decay_multiplier
 
     return time_travel
+
+
+@pytest.fixture()
+def time_travel_chain_past_decay_multiplier(chain, decay_start_time, decay_duration):
+    def time_travel(decay_multiplier):
+        time = int(decay_start_time + decay_duration * decay_multiplier)
+        chain.time_travel(time)
+        chain.mine_block()
+        chain.mine_block()
+        # we mine two blocks here, which should make sure we are past the decay_multiplier
+        # both on the chain and as viewed by the broken gas estimation
+
+    return time_travel
+
+
+def decayed_value(value, decay_multiplier, round_up):
+    decayed_value = value * (1 - decay_multiplier)
+    if round_up:
+        decayed_value = math.ceil(decayed_value)
+    decayed_value = math.floor(decayed_value)
+    return decayed_value
 
 
 def test_proof_entitlement(merkle_drop_contract, tree_data, proofs_for_tree_data):
@@ -138,15 +161,35 @@ def test_withdraw_event(
     assert event["value"] == eligible_value_0
 
 
-@pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
+@pytest.mark.parametrize(
+    "decay_multiplier, round_up",
+    [
+        (0, True),
+        (0.25, True),
+        (0.5, True),
+        (0.75, True),
+        (1, True),
+        (0, False),
+        (0.25, False),
+        (0.5, False),
+        (0.75, False),
+        (1, False),
+    ],
+)
 def test_entitlement_with_decay(
-    merkle_drop_contract, decay_start_time, decay_duration, decay_multiplier
+    merkle_drop_contract, decay_start_time, decay_duration, decay_multiplier, round_up
 ):
-    value = 123456
+    value = 99
     time = int(decay_start_time + decay_duration * decay_multiplier)
-    assert merkle_drop_contract.functions.decayedEntitlementAtTime(
-        value, time
-    ).call() == value * (1 - decay_multiplier)
+
+    expected_entitlement = decayed_value(value, decay_multiplier, round_up)
+
+    assert (
+        merkle_drop_contract.functions.decayedEntitlementAtTime(
+            value, time, round_up
+        ).call()
+        == expected_entitlement
+    )
 
 
 @pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75])
@@ -167,7 +210,7 @@ def test_withdraw_with_decay(
 
     assert dropped_token_contract.functions.balanceOf(
         eligible_address_0
-    ).call() == eligible_value_0 * (1 - decay_multiplier)
+    ).call() == decayed_value(eligible_value_0, decay_multiplier, False)
 
 
 def test_entitlement_after_decay(
@@ -177,20 +220,23 @@ def test_entitlement_after_decay(
     decay_multiplier = 2
     time = int(decay_start_time + decay_duration * decay_multiplier)
     assert (
-        merkle_drop_contract.functions.decayedEntitlementAtTime(value, time).call() == 0
+        merkle_drop_contract.functions.decayedEntitlementAtTime(
+            value, time, True
+        ).call()
+        == 0
     )
 
 
 def test_withdraw_after_decay(
     merkle_drop_contract,
-    time_travel_chain_to_decay_multiplier,
+    time_travel_chain_past_decay_multiplier,
     eligible_address_0,
     eligible_value_0,
     proof_0,
 ):
 
     decay_multiplier = 2
-    time_travel_chain_to_decay_multiplier(decay_multiplier)
+    time_travel_chain_past_decay_multiplier(decay_multiplier)
 
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
         merkle_drop_contract.functions.withdrawFor(
@@ -249,9 +295,12 @@ def test_withdraw_after_burn(
         eligible_address_0, eligible_value_0, proof_0
     ).transact()
 
+    expected_balance = decayed_value(eligible_value_0, decay_multiplier, False)
+
+    # since we mined some blocks, the entitlement could have decayed by 1 in the meantime
     assert dropped_token_contract.functions.balanceOf(
         eligible_address_0
-    ).call() == eligible_value_0 * (1 - decay_multiplier)
+    ).call() == pytest.approx(expected_balance, abs=1)
 
 
 def test_balance_null_after_withdraw_and_burn(
@@ -361,9 +410,9 @@ def test_burn_enough_token(
 def test_self_destruct(
     merkle_drop_contract_already_withdrawn,
     eligible_address_0,
-    time_travel_chain_to_decay_multiplier,
+    time_travel_chain_past_decay_multiplier,
 ):
-    time_travel_chain_to_decay_multiplier(1)
+    time_travel_chain_past_decay_multiplier(1)
     assert (
         merkle_drop_contract_already_withdrawn.functions.withdrawn(
             eligible_address_0
