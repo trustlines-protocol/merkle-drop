@@ -68,7 +68,9 @@ contract DroppedToken {
 
     function transfer(address recipient, uint256 amount) public returns (bool) {
         // We call merkleDrop.burnUnusableTokens() here as a test to see if it will burn too many tokens if we call it before updating the balances.
-        merkleDrop.burnUnusableTokens();
+        if (address(merkleDrop) != address(0)){
+            merkleDrop.burnUnusableTokens();
+        }
         _transfer(msg.sender, recipient, amount);
     }
 
@@ -90,7 +92,7 @@ contract DroppedToken {
     function burn(uint256 amount) public {
         // We call merkleDrop.burnUnusableTokens() here as a test to see if it will burn too many tokens if we re-enter it.
         // We use the burnLoopFlag to prevent an infinite loop of calls, knowing MerkleDrop.sol calls the burn function again.
-        if (! burnLoopFlag) {
+        if (! burnLoopFlag && address(merkleDrop) != address(0)) {
             burnLoopFlag = true;
             merkleDrop.burnUnusableTokens();
         }
