@@ -383,3 +383,30 @@ def test_self_destruct(
 def test_self_destruct_too_soon(merkle_drop_contract):
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
         merkle_drop_contract.functions.deleteContract().transact()
+
+
+def test_yoichis_finding(
+    merkle_drop_contract_small_values,
+    time_travel_chain_to_decay_multiplier,
+    dropped_token_contract,
+    proofs_for_tree_data_small_values,
+    tree_data_small_values,
+):
+    # Tests the finding by Yoichi during code review
+    # Verifies that we round down on the amount of tokens to burn and to transfer to users
+    # Uses exact expected number as provided during review
+
+    merkle_drop = merkle_drop_contract_small_values
+    time_travel_chain_to_decay_multiplier(0.5)
+
+    merkle_drop.functions.burnUnusableTokens().transact()
+
+    assert dropped_token_contract.functions.balanceOf(merkle_drop.address).call() == 50
+
+    for i in range(1, len(proofs_for_tree_data_small_values)):
+        address = tree_data_small_values[i].address
+        value = tree_data_small_values[i].value
+        proof = proofs_for_tree_data_small_values[i]
+
+        merkle_drop.functions.withdrawFor(address, value, proof).transact()
+        assert dropped_token_contract.functions.balanceOf(address).call() == 16
