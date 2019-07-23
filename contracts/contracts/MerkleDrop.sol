@@ -122,9 +122,12 @@ contract MerkleDrop {
     }
 
     function decay(uint value, uint timeToDecay, uint totalDecayTime, bool roundUp) internal pure returns (uint) {
-        uint decay = value*timeToDecay/totalDecayTime;
-        if (decay * totalDecayTime != value * timeToDecay && roundUp) {
-            decay = decay + 1;
+        uint decay;
+
+        if (roundUp) {
+            decay = (value*timeToDecay+totalDecayTime-1)/totalDecayTime;
+        } else {
+            decay = value*timeToDecay/totalDecayTime;
         }
         return decay >= value ? value : decay;
     }
