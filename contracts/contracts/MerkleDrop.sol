@@ -38,7 +38,7 @@ contract MerkleDrop {
 
         burnUnusableTokens();
 
-        uint valueToSend = decayedEntitlementAtTime(value, now);
+        uint valueToSend = decayedEntitlementAtTime(value, now, false);
         assert(valueToSend <= value);
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
         require(valueToSend != 0, "The decayed entitled value is now null.");
@@ -58,14 +58,14 @@ contract MerkleDrop {
         return verifyProof(leaf, proof);
     }
 
-    function decayedEntitlementAtTime(uint value, uint time) public view returns (uint) {
+    function decayedEntitlementAtTime(uint value, uint time, bool roundUp) public view returns (uint) {
         if (time <= decayStartTime) {
             return value;
         } else if (time >= decayStartTime + decayDurationInSeconds) {
             return 0;
         } else {
             uint timeDecayed = time - decayStartTime;
-            uint valueDecay = decay(value, timeDecayed, decayDurationInSeconds);
+            uint valueDecay = decay(value, timeDecayed, decayDurationInSeconds, !roundUp);
             assert(valueDecay <= value);
             return value - valueDecay;
         }
@@ -77,7 +77,7 @@ contract MerkleDrop {
         }
 
         // The amount of tokens that should be held within the contract after burning
-        uint targetBalance = decayedEntitlementAtTime(remainingValue, now);
+        uint targetBalance = decayedEntitlementAtTime(remainingValue, now, true);
 
         // toBurn = (initial balance - target balance) - what we already removed from initial balance
         uint currentBalance = initialBalance - spentTokens;
@@ -121,8 +121,11 @@ contract MerkleDrop {
         droppedToken.burn(value);
     }
 
-    function decay(uint value, uint timeToDecay, uint totalDecayTime) internal pure returns (uint) {
+    function decay(uint value, uint timeToDecay, uint totalDecayTime, bool roundUp) internal pure returns (uint) {
         uint decay = value*timeToDecay/totalDecayTime;
+        if (decay * totalDecayTime != value * timeToDecay && roundUp) {
+            decay = decay + 1;
+        }
         return decay >= value ? value : decay;
     }
 }
