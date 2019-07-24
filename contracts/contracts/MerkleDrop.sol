@@ -11,15 +11,16 @@ contract MerkleDrop {
     uint public decayDurationInSeconds;
 
     uint public initialBalance;
-    uint public remainingValue;  // The total not decayed not withdrawn entitlements
+    uint public remainingValue;  // The total of not withdrawn entitlements, not considering decay
     uint public spentTokens;  // The total tokens spent by the contract, burnt or withdrawn
 
     mapping (address => bool) public withdrawn;
 
-    event Withdraw(address recipient, uint value);
+    event Withdraw(address recipient, uint value, uint originalValue);
     event Burn(uint value);
 
     constructor(DroppedToken _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
+        // The _initialBalance should be equal to the sum of airdropped tokens
         droppedToken = _droppedToken;
         initialBalance = _initialBalance;
         remainingValue = _initialBalance;
@@ -41,18 +42,18 @@ contract MerkleDrop {
         uint valueToSend = decayedEntitlementAtTime(value, now, false);
         assert(valueToSend <= value);
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
-        require(valueToSend != 0, "The decayed entitled value is now null.");
+        require(valueToSend != 0, "The decayed entitled value is now zero.");
 
         withdrawn[recipient] = true;
         remainingValue -= value;
         spentTokens += valueToSend;
 
         droppedToken.transfer(recipient, valueToSend);
-        emit Withdraw(recipient, value);
+        emit Withdraw(recipient, valueToSend, value);
     }
 
     function verifyEntitled(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {
-        // We need to pack pack the 20 bytes address to the 32 bytes value
+        // We need to pack the 20 bytes address to the 32 bytes value
         // to match with the proof made with the python merkle-drop package
         bytes32 leaf = keccak256(abi.encodePacked(recipient, value));
         return verifyProof(leaf, proof);
