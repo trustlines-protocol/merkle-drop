@@ -93,8 +93,8 @@ def get_entitlement_for(address):
     return jsonify(
         {
             "address": to_checksum_address(address),
-            "originalTokenBalance": eligible_tokens,
-            "currentTokenBalance": decayed_tokens,
+            "originalTokenBalance": str(eligible_tokens),
+            "currentTokenBalance": str(decayed_tokens),
             "proof": [encode_hex(hash_) for hash_ in proof],
         }
     )
@@ -112,3 +112,10 @@ def decay_tokens(tokens: int) -> int:
         decay = math.ceil(tokens * time_decayed / decay_duration_in_seconds)
         assert decay <= tokens
         return tokens - decay
+
+
+# Only for testing
+if __name__ == "__main__":
+    init_cors(origins="*")
+    init("airdrop.csv", int(time.time()), 63_072_000)
+    app.run()
