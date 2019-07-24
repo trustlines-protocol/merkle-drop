@@ -5,7 +5,7 @@ import logging
 from flask import Flask
 from flask import jsonify, abort
 from flask_cors import CORS
-from eth_utils import encode_hex, is_address, to_canonical_address
+from eth_utils import encode_hex, is_address, to_canonical_address, to_checksum_address
 import pendulum
 
 from merkle_drop.airdrop import get_item, get_balance, to_items
@@ -92,7 +92,7 @@ def get_entitlement_for(address):
         decayed_tokens = decay_tokens(eligible_tokens)
     return jsonify(
         {
-            "address": address,
+            "address": to_checksum_address(address),
             "originalTokenBalance": eligible_tokens,
             "currentTokenBalance": decayed_tokens,
             "proof": [encode_hex(hash_) for hash_ in proof],
