@@ -1,12 +1,12 @@
 pragma solidity ^0.5.8;
 
-import "./DroppedToken.sol";
+import "./ERC20Interface.sol";
 
 
 contract MerkleDrop {
 
     bytes32 public root;
-    DroppedToken public droppedToken;
+    ERC20Interface public droppedToken;
     uint public decayStartTime;
     uint public decayDurationInSeconds;
 
@@ -19,7 +19,7 @@ contract MerkleDrop {
     event Withdraw(address recipient, uint value, uint originalValue);
     event Burn(uint value);
 
-    constructor(DroppedToken _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
+    constructor(ERC20Interface _droppedToken, uint _initialBalance, bytes32 _root, uint _decayStartTime, uint _decayDurationInSeconds) public {
         // The _initialBalance should be equal to the sum of airdropped tokens
         droppedToken = _droppedToken;
         initialBalance = _initialBalance;
@@ -48,7 +48,7 @@ contract MerkleDrop {
         remainingValue -= value;
         spentTokens += valueToSend;
 
-        droppedToken.transfer(recipient, valueToSend);
+        require(droppedToken.transfer(recipient, valueToSend));
         emit Withdraw(recipient, valueToSend, value);
     }
 

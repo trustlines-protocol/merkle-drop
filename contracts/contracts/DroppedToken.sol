@@ -11,7 +11,7 @@ import "./MerkleDrop.sol";
 
 // This contract should not be deployed
 
-contract DroppedToken {
+contract DroppedToken is ERC20Interface {
 
     using SafeMath for uint256;
 
@@ -68,7 +68,7 @@ contract DroppedToken {
 
     function transfer(address recipient, uint256 amount) public returns (bool) {
         // We call merkleDrop.burnUnusableTokens() here as a test to see if it will burn too many tokens if we call it before updating the balances.
-        if (address(merkleDrop) != address(0)){
+        if (address(merkleDrop) != address(0)) {
             merkleDrop.burnUnusableTokens();
         }
         _transfer(msg.sender, recipient, amount);
