@@ -5,7 +5,7 @@ import logging
 from flask import Flask
 from flask import jsonify, abort
 from flask_cors import CORS
-from eth_utils import encode_hex, is_checksum_address, to_canonical_address
+from eth_utils import encode_hex, is_address, to_canonical_address
 import pendulum
 
 from merkle_drop.airdrop import get_item, get_balance, to_items
@@ -79,7 +79,7 @@ def internal_server_error(e):
 
 @app.route("/entitlement/<string:address>", methods=["GET"])
 def get_entitlement_for(address):
-    if not is_checksum_address(address):
+    if not is_address(address):
         abort(400, "The address is not in checksum-case or invalid")
     canonical_address = to_canonical_address(address)
 
