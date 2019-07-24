@@ -72,6 +72,7 @@ contract DroppedToken is ERC20Interface {
             merkleDrop.burnUnusableTokens();
         }
         _transfer(msg.sender, recipient, amount);
+        return true;
     }
 
     function approve(address spender, uint256 value) public returns (bool) {
