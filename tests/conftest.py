@@ -1,7 +1,7 @@
-import pytest
 import eth_tester
+import pytest
 
-from merkle_drop.merkle_tree import build_tree, Item, create_proof, validate_proof
+from merkle_drop.merkle_tree import Item, build_tree, create_proof, validate_proof
 
 # increase eth_tester's GAS_LIMIT
 assert eth_tester.backends.pyevm.main.GENESIS_GAS_LIMIT < 8 * 10 ** 6

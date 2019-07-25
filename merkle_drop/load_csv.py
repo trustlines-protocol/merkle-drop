@@ -1,5 +1,5 @@
-from typing import Dict
 import csv
+from typing import Dict
 
 from eth_utils import is_checksum_address, to_canonical_address
 
