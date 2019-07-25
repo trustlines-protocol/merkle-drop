@@ -1,16 +1,15 @@
-import time
-import math
 import logging
+import math
+import time
 
-from flask import Flask
-from flask import jsonify, abort
-from flask_cors import CORS
-from eth_utils import encode_hex, is_address, to_canonical_address, to_checksum_address
 import pendulum
+from eth_utils import encode_hex, is_address, to_canonical_address, to_checksum_address
+from flask import Flask, abort, jsonify
+from flask_cors import CORS
 
-from merkle_drop.airdrop import get_item, get_balance, to_items
+from merkle_drop.airdrop import get_balance, get_item, to_items
 from merkle_drop.load_csv import load_airdrop_file
-from merkle_drop.merkle_tree import create_proof, build_tree
+from merkle_drop.merkle_tree import build_tree, create_proof
 
 app = Flask("Merkle Airdrop Backend Server")
 

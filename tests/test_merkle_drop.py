@@ -1,7 +1,7 @@
-import pytest
 import math
 
 import eth_tester.exceptions
+import pytest
 from eth_utils import to_checksum_address
 from web3.exceptions import BadFunctionCallOutput
 
