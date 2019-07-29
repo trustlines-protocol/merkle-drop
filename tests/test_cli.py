@@ -146,3 +146,13 @@ def test_deploy_cli_with_date(runner, airdrop_list_file):
 
     print(result.output)
     assert result.exit_code == 0
+
+
+def test_status_cli(runner, merkle_drop_contract):
+    result = runner.invoke(
+        main,
+        args=f"status --jsonrpc test --merkle-drop-address {merkle_drop_contract.address}",
+    )
+
+    print(result.output)
+    assert result.exit_code == 0

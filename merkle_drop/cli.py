@@ -18,6 +18,7 @@ from .airdrop import get_balance, get_item, to_items
 from .deploy import deploy_merkle_drop, sum_of_airdropped_tokens
 from .load_csv import load_airdrop_file
 from .merkle_tree import build_tree, compute_merkle_root, create_proof
+from .status import get_merkle_drop_status
 
 
 def validate_address(ctx, param, value):
@@ -184,3 +185,23 @@ def deploy(
 
     click.echo(f"MerkleDrop address: {merkle_drop.address}")
     click.echo(f"Merkle root: {encode_hex(merkle_root)}")
+
+
+@main.command(short_help="Show the current Status of the MerkleDrop contract")
+@jsonrpc_option
+@click.option(
+    "--merkle-drop-address",
+    help='The address of the merkle drop contract, "0x" prefixed string',
+    type=str,
+    required=True,
+    callback=validate_address,
+)
+def status(jsonrpc: str, merkle_drop_address: str):
+    web3 = connect_to_json_rpc(jsonrpc)
+
+    status = get_merkle_drop_status(web3, merkle_drop_address)
+
+    print(status)
+
+    # TODO: Add actual status output
+    click.echo("Hello World")
