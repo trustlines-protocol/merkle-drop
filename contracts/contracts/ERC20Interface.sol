@@ -2,6 +2,12 @@ pragma solidity ^0.5.8;
 
 contract ERC20Interface {
 
+    function name() public view returns (string memory);
+
+    function symbol() public view returns (string memory);
+
+    function decimals() public view returns (uint8);
+
     function totalSupply() public view returns (uint);
 
     function balanceOf(address tokenOwner) public view returns (uint balance);
