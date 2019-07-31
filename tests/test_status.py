@@ -21,3 +21,7 @@ def test_status(
     assert status["remaining_value"] == premint_token_value
     assert status["spent_tokens"] == 0
     assert status["token_balance"] == premint_token_value
+    assert status["token_name"] == "droppedToken"
+    assert status["token_symbol"] == "DTN"
+    assert status["token_decimals"] == 18
+    assert status["decayed_remaining_value"] <= premint_token_value
