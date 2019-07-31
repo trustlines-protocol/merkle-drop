@@ -1,6 +1,10 @@
+import pendulum
 import pytest
 from click.testing import CliRunner
+from deploy_tools.cli import connect_to_json_rpc
+from deploy_tools.deploy import deploy_compiled_contract, load_contracts_json
 from eth_utils import is_hex, to_checksum_address, to_normalized_address
+from web3.contract import Contract
 
 from merkle_drop.cli import main
 from merkle_drop.load_csv import load_airdrop_file, validate_address_value_pairs
@@ -146,3 +150,74 @@ def test_deploy_cli_with_date(runner, airdrop_list_file):
 
     print(result.output)
     assert result.exit_code == 0
+
+
+def test_status_cli(runner, root_hash_for_tree_data, premint_token_value):
+
+    # Deploy Token & Contract. This could be refactored into fixtures, but it's only used for this specific case.
+    web3 = connect_to_json_rpc("test")
+    compiled_contracts = load_contracts_json("merkle_drop")
+
+    token_contract: Contract = deploy_compiled_contract(
+        abi=compiled_contracts["DroppedToken"]["abi"],
+        bytecode=compiled_contracts["DroppedToken"]["bytecode"],
+        constructor_args=(
+            "Test Token",
+            "TT",
+            18,
+            web3.eth.accounts[0],
+            premint_token_value,
+        ),
+        web3=web3,
+    )
+
+    merkle_drop_contract: Contract = deploy_compiled_contract(
+        abi=compiled_contracts["MerkleDrop"]["abi"],
+        bytecode=compiled_contracts["MerkleDrop"]["bytecode"],
+        constructor_args=(
+            token_contract.address,
+            premint_token_value,
+            root_hash_for_tree_data,
+            pendulum.now().int_timestamp + 10,
+            60 * 60 * 24 * 4,
+        ),
+        web3=web3,
+    )
+
+    # Get Status - This should result in the insufficient funds warning
+    result = runner.invoke(
+        main,
+        args=f"status --jsonrpc test --merkle-drop-address {merkle_drop_contract.address}",
+    )
+
+    assert result.exit_code == 0
+
+    # Check for funding warning
+    assert "Token Balance is lower than Decayed Remaining Value." in result.output
+
+    # Fund contract
+    token_contract.functions.storeAddressOfMerkleDrop(
+        merkle_drop_contract.address
+    ).transact()
+    token_contract.functions.transfer(
+        merkle_drop_contract.address, premint_token_value
+    ).transact()
+    assert (
+        token_contract.functions.balanceOf(merkle_drop_contract.address).call()
+        == premint_token_value
+    )
+
+    # Get Status - Again, this time without warning
+    result = runner.invoke(
+        main,
+        args=f"status --jsonrpc test --merkle-drop-address {merkle_drop_contract.address}",
+    )
+
+    print(result.output)
+    assert result.exit_code == 0
+
+    assert "Token Balance is lower than Decayed Remaining Value." not in result.output
+    assert "Test Token (TT)" in result.output
+    assert token_contract.address in result.output
+    assert merkle_drop_contract.address in result.output
+    assert "in 4 days" in result.output
