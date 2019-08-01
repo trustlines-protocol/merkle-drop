@@ -78,6 +78,7 @@ contract DroppedToken is ERC20Interface {
     function approve(address spender, uint256 value) public returns (bool) {
         require(value == 0 || _allowances[msg.sender][spender] == 0, "ERC20: approve only to or from 0 value");
         _approve(msg.sender, spender, value);
+        return true;
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
@@ -88,6 +89,7 @@ contract DroppedToken is ERC20Interface {
         if (allowance < MAX_UINT) {
             _approve(sender, msg.sender, updatedAllowance);
         }
+        return true;
     }
 
     function burn(uint256 amount) public {
