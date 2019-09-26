@@ -1,7 +1,7 @@
 import csv
 from typing import Dict
 
-from eth_utils import is_checksum_address, to_canonical_address
+from eth_utils import is_address, to_canonical_address
 
 
 def load_airdrop_file(airdrop_file: str) -> Dict[bytes, int]:
@@ -25,7 +25,7 @@ def validate_address_value_pairs(address_value_pairs):
             )
 
         address, value = address_value_pair
-        if not is_checksum_address(address):
+        if not is_address(address):
             raise ValueError(f"Expected checksummed hex address, but got {address}")
 
         if not value.isdigit():

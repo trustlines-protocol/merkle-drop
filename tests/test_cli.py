@@ -66,6 +66,8 @@ def test_read_csv_file(airdrop_list_file):
         ((to_checksum_address(A_ADDRESS), "0"),),
         ((to_checksum_address(A_ADDRESS), "0"), (to_checksum_address(B_ADDRESS), "0")),
         ((to_checksum_address(A_ADDRESS), str(2 ** 256 - 1)),),
+        ((to_normalized_address(A_ADDRESS), "0"),),
+        (((A_ADDRESS), "0"),),
     ],
 )
 def test_valid_airdrop_file_validation(address_value_pairs):
@@ -82,8 +84,6 @@ def test_valid_airdrop_file_validation(address_value_pairs):
         ((to_checksum_address(A_ADDRESS), "0xaa"),),
         ((to_checksum_address(A_ADDRESS), "-3"),),
         ((to_checksum_address(A_ADDRESS), "1.2"),),
-        ((A_ADDRESS, "0"),),
-        ((to_normalized_address(A_ADDRESS), "0"),),
         (("0", to_checksum_address(A_ADDRESS)),),
     ],
 )
