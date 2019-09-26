@@ -3,7 +3,7 @@ import pytest
 from click.testing import CliRunner
 from deploy_tools.cli import connect_to_json_rpc
 from deploy_tools.deploy import deploy_compiled_contract, load_contracts_json
-from eth_utils import is_hex, to_checksum_address, to_normalized_address
+from eth_utils import is_hex, to_checksum_address
 from web3.contract import Contract
 
 from merkle_drop.cli import main
@@ -82,8 +82,6 @@ def test_valid_airdrop_file_validation(address_value_pairs):
         ((to_checksum_address(A_ADDRESS), "0xaa"),),
         ((to_checksum_address(A_ADDRESS), "-3"),),
         ((to_checksum_address(A_ADDRESS), "1.2"),),
-        ((A_ADDRESS, "0"),),
-        ((to_normalized_address(A_ADDRESS), "0"),),
         (("0", to_checksum_address(A_ADDRESS)),),
     ],
 )
