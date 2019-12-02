@@ -30,12 +30,8 @@ contract MerkleDrop {
     }
 
     function withdraw(uint value, bytes32[] memory proof) public {
-        withdrawFor(msg.sender, value, proof);
-    }
-
-    function withdrawFor(address recipient, uint value, bytes32[] memory proof) public {
-        require(verifyEntitled(recipient, value, proof), "The proof could not be verified.");
-        require(! withdrawn[recipient], "The recipient has already withdrawn its entitled token.");
+        require(verifyEntitled(msg.sender, value, proof), "The proof could not be verified.");
+        require(! withdrawn[msg.sender], "You have already withdrawn your entitled token.");
 
         burnUnusableTokens();
 
@@ -44,12 +40,12 @@ contract MerkleDrop {
         require(droppedToken.balanceOf(address(this)) >= valueToSend, "The MerkleDrop does not have tokens to drop yet / anymore.");
         require(valueToSend != 0, "The decayed entitled value is now zero.");
 
-        withdrawn[recipient] = true;
+        withdrawn[msg.sender] = true;
         remainingValue -= value;
         spentTokens += valueToSend;
 
-        require(droppedToken.transfer(recipient, valueToSend));
-        emit Withdraw(recipient, valueToSend, value);
+        require(droppedToken.transfer(msg.sender, valueToSend));
+        emit Withdraw(msg.sender, valueToSend, value);
     }
 
     function verifyEntitled(address recipient, uint value, bytes32[] memory proof) public view returns (bool) {

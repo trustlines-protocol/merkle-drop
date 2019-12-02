@@ -1,5 +1,6 @@
 import eth_tester
 import pytest
+from eth_utils import to_canonical_address
 
 from merkle_drop.merkle_tree import Item, build_tree, create_proof, validate_proof
 
@@ -9,25 +10,43 @@ eth_tester.backends.pyevm.main.GENESIS_GAS_LIMIT = 8 * 10 ** 6
 
 
 @pytest.fixture(scope="session")
-def tree_data():
+def canonical_addresses(accounts):
+    """Canonical address list of the test accounts.
+
+    Use the test accounts instead of random addresses, since they need a
+    balance to withdraw their dropped token. They get converted into
+    their canonical representation form because the tree structure need
+    it like that.
+    """
+    return [to_canonical_address(account) for account in accounts]
+
+
+@pytest.fixture(scope="session")
+def tree_data(canonical_addresses):
+    # Ignore the first address, since it is used for the premint_token_owner
     return [
-        Item(b"\xaa" * 20, 1_000_000),
-        Item(b"\xbb" * 20, 2_000_000),
-        Item(b"\xcc" * 20, 3_000_000),
-        Item(b"\xdd" * 20, 4_000_000),
-        Item(b"\xee" * 20, 5_000_000),
+        Item(canonical_addresses[1], 1_000_000),
+        Item(canonical_addresses[2], 2_000_000),
+        Item(canonical_addresses[3], 3_000_000),
+        Item(canonical_addresses[4], 4_000_000),
+        Item(canonical_addresses[5], 5_000_000),
     ]
 
 
 @pytest.fixture(scope="session")
-def tree_data_small_values():
+def tree_data_small_values(canonical_addresses):
     # Tree data with small values to test rounding errors as made explicit by Yoichi during code review
-    return [Item(b"\xaa" * 20, 33), Item(b"\xbb" * 20, 33), Item(b"\xcc" * 20, 33)]
+    return [
+        Item(canonical_addresses[1], 33),
+        Item(canonical_addresses[2], 33),
+        Item(canonical_addresses[3], 33),
+    ]
 
 
 @pytest.fixture(scope="session")
-def other_data():
-    return [Item(b"\xff" * 20, 6), Item(b"\x00" * 20, 7)]
+def other_data(canonical_addresses):
+    # Be aware that the tree_data use already the address indexes 1-5
+    return [Item(canonical_addresses[6], 6), Item(canonical_addresses[7], 7)]
 
 
 @pytest.fixture(scope="session")
@@ -198,5 +217,4 @@ def merkle_drop_contract_small_values(
         dropped_token_contract.functions.balanceOf(contract.address).call()
         == premint_token_small_value
     )
-
     return contract
