@@ -14,9 +14,9 @@ def merkle_drop_contract_already_withdrawn(
     eligible_value_0,
     proof_0,
 ):
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     assert (
         dropped_token_contract.functions.balanceOf(eligible_address_0).call()
@@ -111,7 +111,9 @@ def test_withdraw(
         address = tree_data[i].address
         value = tree_data[i].value
         proof = proofs_for_tree_data[i]
-        merkle_drop_contract.functions.withdrawFor(address, value, proof).transact()
+        merkle_drop_contract.functions.withdraw(value, proof).transact(
+            {"from": address}
+        )
 
         assert dropped_token_contract.functions.balanceOf(address).call() == value
         assert (
@@ -129,18 +131,18 @@ def test_withdraw_already_withdrawn(
     proof_0,
 ):
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
-        merkle_drop_contract_already_withdrawn.functions.withdrawFor(
-            eligible_address_0, eligible_value_0, proof_0
-        ).transact()
+        merkle_drop_contract_already_withdrawn.functions.withdraw(
+            eligible_value_0, proof_0
+        ).transact({"from": eligible_address_0})
 
 
 def test_withdraw_wrong_proof(
     merkle_drop_contract_already_withdrawn, other_data, proof_0
 ):
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
-        merkle_drop_contract_already_withdrawn.functions.withdrawFor(
-            other_data[0].address, other_data[0].value, proof_0
-        ).transact()
+        merkle_drop_contract_already_withdrawn.functions.withdraw(
+            other_data[0].value, proof_0
+        ).transact({"from": other_data[0].address})
 
 
 def test_withdraw_event(
@@ -149,9 +151,9 @@ def test_withdraw_event(
 
     latest_block_number = web3.eth.blockNumber
 
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     event = merkle_drop_contract.events.Withdraw.createFilter(
         fromBlock=latest_block_number
@@ -204,9 +206,9 @@ def test_withdraw_with_decay(
 ):
     time_travel_chain_to_decay_multiplier(decay_multiplier)
 
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     assert dropped_token_contract.functions.balanceOf(
         eligible_address_0
@@ -239,9 +241,9 @@ def test_withdraw_after_decay(
     time_travel_chain_past_decay_multiplier(decay_multiplier)
 
     with pytest.raises(eth_tester.exceptions.TransactionFailed):
-        merkle_drop_contract.functions.withdrawFor(
-            eligible_address_0, eligible_value_0, proof_0
-        ).transact()
+        merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+            {"from": eligible_address_0}
+        )
 
 
 @pytest.mark.parametrize("decay_multiplier", [0, 0.25, 0.5, 0.75, 1])
@@ -291,9 +293,9 @@ def test_withdraw_after_burn(
     time_travel_chain_to_decay_multiplier(decay_multiplier)
 
     merkle_drop_contract.functions.burnUnusableTokens().transact()
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     expected_balance = decayed_value(eligible_value_0, decay_multiplier, False)
 
@@ -320,9 +322,9 @@ def test_balance_null_after_withdraw_and_burn(
 
     decay_multiplier = 0.5
     time_travel_chain_to_decay_multiplier(decay_multiplier)
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     decay_multiplier = 0.75
     time_travel_chain_to_decay_multiplier(decay_multiplier)
@@ -357,9 +359,9 @@ def test_everyone_can_withdraw_after_burns(
 
     decay_multiplier = 0.5
     time_travel_chain_to_decay_multiplier(decay_multiplier)
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     decay_multiplier = 0.75
     time_travel_chain_to_decay_multiplier(decay_multiplier)
@@ -370,7 +372,9 @@ def test_everyone_can_withdraw_after_burns(
         value = tree_data[i].value
         proof = proofs_for_tree_data[i]
 
-        merkle_drop_contract.functions.withdrawFor(address, value, proof).transact()
+        merkle_drop_contract.functions.withdraw(value, proof).transact(
+            {"from": address}
+        )
 
     decay_multiplier = 1
     time_travel_chain_to_decay_multiplier(decay_multiplier)
@@ -395,9 +399,9 @@ def test_burn_enough_token(
 
     decay_multiplier = 0.5
     time_travel_chain_to_decay_multiplier(decay_multiplier)
-    merkle_drop_contract.functions.withdrawFor(
-        eligible_address_0, eligible_value_0, proof_0
-    ).transact()
+    merkle_drop_contract.functions.withdraw(eligible_value_0, proof_0).transact(
+        {"from": eligible_address_0}
+    )
 
     merkle_drop_contract.functions.burnUnusableTokens().transact()
 
@@ -456,6 +460,5 @@ def test_yoichis_finding(
         address = tree_data_small_values[i].address
         value = tree_data_small_values[i].value
         proof = proofs_for_tree_data_small_values[i]
-
-        merkle_drop.functions.withdrawFor(address, value, proof).transact()
+        merkle_drop.functions.withdraw(value, proof).transact({"from": address})
         assert dropped_token_contract.functions.balanceOf(address).call() == 16
