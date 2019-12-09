@@ -1,3 +1,10 @@
+/* Please read and review the Terms and Conditions governing this
+   Merkle Drop by visiting the Trustlines Foundation homepage. Any
+   interaction with this smart contract, including but not limited to
+   claiming Trustlines Network Tokens, is subject to these Terms and
+   Conditions.
+ */
+
 pragma solidity ^0.5.8;
 
 import "./ERC20Interface.sol";
