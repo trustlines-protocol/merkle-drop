@@ -43,6 +43,15 @@ airdrop_file_argument = click.argument(
 )
 
 
+merkle_drop_address_option = click.option(
+    "--merkle-drop-address",
+    help='The address of the merkle drop contract, "0x" prefixed string',
+    type=str,
+    required=True,
+    callback=validate_address,
+)
+
+
 @click.group()
 def main():
     pass
@@ -189,13 +198,7 @@ def deploy(
 
 @main.command(short_help="Show the current Status of the MerkleDrop contract")
 @jsonrpc_option
-@click.option(
-    "--merkle-drop-address",
-    help='The address of the merkle drop contract, "0x" prefixed string',
-    type=str,
-    required=True,
-    callback=validate_address,
-)
+@merkle_drop_address_option
 def status(jsonrpc: str, merkle_drop_address: str):
     web3 = connect_to_json_rpc(jsonrpc)
 
@@ -260,3 +263,27 @@ def status(jsonrpc: str, merkle_drop_address: str):
         f"{remaining_seconds}"
         f" ({pendulum.now().add(seconds=remaining_seconds).diff_for_humans(absolute=True)})"
     )
+
+
+@main.command(
+    short_help="Compare the Merkle root of an airdrop file with a deployed contracts one."
+)
+@jsonrpc_option
+@merkle_drop_address_option
+@airdrop_file_argument
+def check_root(jsonrpc: str, merkle_drop_address: str, airdrop_file_name: str):
+    click.echo("Read Merkle root from contract...")
+    web3 = connect_to_json_rpc(jsonrpc)
+    status = get_merkle_drop_status(web3, merkle_drop_address)
+    merkle_root_contract = status["root"].hex()
+    click.echo(f"Merkle root at contract: '{merkle_root_contract}'")
+
+    click.echo("Calculate Merkle root by airdrop file...")
+    airdrop_data = load_airdrop_file(airdrop_file_name)
+    merkle_root_file = compute_merkle_root(to_items(airdrop_data)).hex()
+    click.echo(f"Merkle root by airdrop file: '{merkle_root_file}'")
+
+    if merkle_root_contract == merkle_root_file:
+        click.secho("Both Merkle roots are equal.", fg="green")
+    else:
+        click.secho("The Merkle roots differ.", fg="red")
