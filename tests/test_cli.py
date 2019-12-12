@@ -237,7 +237,7 @@ def test_status_cli_not_funded(runner, unfunded_merkle_drop_contract):
         args=f"status --jsonrpc test --merkle-drop-address {unfunded_merkle_drop_contract.address}",
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     # Check for funding warning
     assert "Token Balance is lower than Decayed Remaining Value." in result.output
 
@@ -284,6 +284,6 @@ def test_check_root_cli_fail_wrong_root(
         f"{wrong_airdrop_list_file}",
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert root_hash_for_tree_data.hex() in result.output
     assert "differ" in result.output

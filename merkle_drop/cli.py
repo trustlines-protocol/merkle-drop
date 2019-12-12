@@ -1,3 +1,5 @@
+import sys
+
 import click
 import pendulum
 from deploy_tools.cli import (
@@ -50,6 +52,10 @@ merkle_drop_address_option = click.option(
     required=True,
     callback=validate_address,
 )
+
+
+EXIT_OK_CODE = 0
+EXIT_ERROR_CODE = 1
 
 
 @click.group()
@@ -202,52 +208,54 @@ def deploy(
 def status(jsonrpc: str, merkle_drop_address: str):
     web3 = connect_to_json_rpc(jsonrpc)
 
-    status = get_merkle_drop_status(web3, merkle_drop_address)
+    exit_code = EXIT_OK_CODE
+    status_dict = get_merkle_drop_status(web3, merkle_drop_address)
 
-    click.echo(f"Token Address:             {status['token_address']}")
+    click.echo(f"Token Address:             {status_dict['token_address']}")
     click.echo(
-        f"Token Name:                {status['token_name']} ({status['token_symbol']})"
+        f"Token Name:                {status_dict['token_name']} ({status_dict['token_symbol']})"
     )
     click.echo(
-        f"Token Balance:             {status['token_balance'] / 10**status['token_decimals']}"
+        f"Token Balance:             {status_dict['token_balance'] / 10**status_dict['token_decimals']}"
     )
 
     click.echo("")
 
-    click.echo(f"Merkle Drop Address:       {status['address']}")
-    click.echo(f"Merkle Root:               {status['root'].hex()}")
+    click.echo(f"Merkle Drop Address:       {status_dict['address']}")
+    click.echo(f"Merkle Root:               {status_dict['root'].hex()}")
 
     click.echo("")
 
     click.echo(
-        f"Initial Balance:           {status['initial_balance'] / 10**status['token_decimals']}"
+        f"Initial Balance:           {status_dict['initial_balance'] / 10**status_dict['token_decimals']}"
     )
     click.echo(
-        f"Remaining Value:           {status['remaining_value'] / 10**status['token_decimals']}"
+        f"Remaining Value:           {status_dict['remaining_value'] / 10**status_dict['token_decimals']}"
     )
     click.echo(
-        f"Spent tokens:              {status['spent_tokens'] / 10**status['token_decimals']}"
+        f"Spent tokens:              {status_dict['spent_tokens'] / 10**status_dict['token_decimals']}"
     )
     click.echo(
-        f"Decayed Remaining Value:   {status['decayed_remaining_value'] / 10**status['token_decimals']}"
+        f"Decayed Remaining Value:   {status_dict['decayed_remaining_value'] / 10**status_dict['token_decimals']}"
     )
 
-    if status["token_balance"] < status["decayed_remaining_value"]:
+    if status_dict["token_balance"] < status_dict["decayed_remaining_value"]:
         click.secho("Token Balance is lower than Decayed Remaining Value.", fg="red")
+        exit_code = EXIT_ERROR_CODE
 
     click.echo("")
 
     click.echo(
-        f"Decay Start Time:          {pendulum.from_timestamp(status['decay_start_time'])}"
-        f" ({pendulum.from_timestamp(status['decay_start_time']).diff_for_humans()})"
+        f"Decay Start Time:          {pendulum.from_timestamp(status_dict['decay_start_time'])}"
+        f" ({pendulum.from_timestamp(status_dict['decay_start_time']).diff_for_humans()})"
     )
     click.echo(
-        f"Decay Duration in Seconds: {status['decay_duration_in_seconds']}"
-        f" ({pendulum.now().add(seconds=status['decay_duration_in_seconds']).diff_for_humans(absolute=True)})"
+        f"Decay Duration in Seconds: {status_dict['decay_duration_in_seconds']}"
+        f" ({pendulum.now().add(seconds=status_dict['decay_duration_in_seconds']).diff_for_humans(absolute=True)})"
     )
 
     end_timestamp = pendulum.from_timestamp(
-        status["decay_start_time"] + status["decay_duration_in_seconds"]
+        status_dict["decay_start_time"] + status_dict["decay_duration_in_seconds"]
     )
     click.echo(
         f"Decay End Time:            "
@@ -256,13 +264,15 @@ def status(jsonrpc: str, merkle_drop_address: str):
     )
 
     remaining_seconds = (
-        status["decay_start_time"] + status["decay_duration_in_seconds"]
+        status_dict["decay_start_time"] + status_dict["decay_duration_in_seconds"]
     ) - pendulum.now().int_timestamp
     click.echo(
         f"Remaining Time in Seconds: "
         f"{remaining_seconds}"
         f" ({pendulum.now().add(seconds=remaining_seconds).diff_for_humans(absolute=True)})"
     )
+
+    sys.exit(exit_code)
 
 
 @main.command(
@@ -287,3 +297,4 @@ def check_root(jsonrpc: str, merkle_drop_address: str, airdrop_file_name: str):
         click.secho("Both Merkle roots are equal.", fg="green")
     else:
         click.secho("The Merkle roots differ.", fg="red")
+        sys.exit(EXIT_ERROR_CODE)
