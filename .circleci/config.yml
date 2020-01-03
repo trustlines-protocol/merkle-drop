@@ -38,7 +38,7 @@ jobs:
       - run:
           name: Run flake8
           command: |
-            flake8 merkle_drop tests
+            flake8 src tests
 
   run-black:
     executor: ubuntu-builder
@@ -49,7 +49,7 @@ jobs:
       - run:
           name: Run black
           command: |
-            black --check merkle_drop tests
+            black --check src tests
 
   run-solium:
     executor: ubuntu-builder
@@ -125,7 +125,7 @@ jobs:
       - run:
           name: Run mypy
           command: |
-            mypy --ignore-missing-imports merkle_drop tests
+            mypy --ignore-missing-imports src tests
 
 workflows:
   version: 2

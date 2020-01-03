@@ -4,7 +4,8 @@ setup(
     name="merkle-drop",
     setup_requires=["setuptools_scm"],
     use_scm_version=True,
-    packages=find_packages(),
+    packages=find_packages("src"),
+    package_dir={"": "src"},
     install_requires=[
         "click",
         "eth_utils",

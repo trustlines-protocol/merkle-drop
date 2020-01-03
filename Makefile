@@ -1,16 +1,16 @@
 VIRTUAL_ENV ?= venv
 
 lint: install
-	$(VIRTUAL_ENV)/bin/flake8 merkle_drop tests
-	$(VIRTUAL_ENV)/bin/black --check merkle_drop tests
-	$(VIRTUAL_ENV)/bin/mypy --ignore-missing-imports merkle_drop tests
+	$(VIRTUAL_ENV)/bin/flake8 src tests
+	$(VIRTUAL_ENV)/bin/black --check src tests
+	$(VIRTUAL_ENV)/bin/mypy --ignore-missing-imports src tests
 
 test: install
 	$(VIRTUAL_ENV)/bin/pytest tests
 
 compile: install-requirements
 	$(VIRTUAL_ENV)/bin/deploy-tools compile --evm-version petersburg -d ./contracts/contracts
-	$(VIRTUAL_ENV)/bin/python scripts/pack_contracts.py build/contracts.json merkle_drop/contracts.json
+	$(VIRTUAL_ENV)/bin/python scripts/pack_contracts.py build/contracts.json src/merkle_drop/contracts.json
 
 
 build: compile
