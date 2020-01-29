@@ -33,7 +33,6 @@ hexbytes==0.2.0
 identify==1.4.5
 idna==2.8
 importlib-metadata==0.19
-importlib-resources==1.0.2
 ipfshttpclient==0.4.12
 isort==4.3.21
 itsdangerous==1.1.0
@@ -53,7 +52,6 @@ parsimonious==0.8.1
 pendulum==2.0.5
 pep8-naming==0.8.2
 pip==19.2.1
-pkg-resources==0.0.0
 pluggy==0.12.0
 pre-commit==1.18.0
 protobuf==3.9.0
@@ -66,6 +64,7 @@ pycryptodome==3.8.2
 pyethash==0.1.27
 pyflakes==2.1.1
 pyparsing==2.4.2
+pysha3==1.0.2
 pytest==5.0.1
 pytest-cov==2.7.1
 python-dateutil==2.8.0

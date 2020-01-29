@@ -8,11 +8,13 @@ setup(
     package_dir={"": "src"},
     install_requires=[
         "click",
+        "web3",
+        "contract-deploy-tools",
         "eth_utils",
-        "eth-hash[pycryptodome]",
         "flask",
         "flask_cors",
         "pendulum",
+        "gunicorn",
     ],
     entry_points="""
     [console_scripts]

@@ -1,11 +1,13 @@
 click
+web3
+contract-deploy-tools
 eth_utils
-eth-hash[pycryptodome]
-pendulum
 flask
 flask_cors
-
+pendulum
 gunicorn
+
+# development dependencies
 pytest
 pytest-cov
 mypy
@@ -13,5 +15,4 @@ flake8
 pep8-naming
 black
 pre-commit
-contract-deploy-tools
 isort
