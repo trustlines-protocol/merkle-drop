@@ -1,5 +1,10 @@
 version: 2.1
 
+templates:
+  tagged-filter: &tagged-filter
+    tags:
+      only: /[0-9]+(\.[0-9]+)*/
+
 executors:
   ubuntu-builder:
     docker:
@@ -128,21 +133,66 @@ jobs:
           command: |
             mypy --ignore-missing-imports src tests
 
+  upload-pypi:
+    executor: ubuntu-builder
+    steps:
+      - attach_workspace:
+          at: '~'
+      - config-path
+      - run:
+          name: Init .pypirc
+          command: |
+            echo -e "[pypi]" >> ~/.pypirc
+            echo -e "username = $PYPI_USER" >> ~/.pypirc
+            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+      - run:
+          name: Build sdist and wheel
+          command: |
+            make compile
+            python setup.py sdist
+            python setup.py bdist_wheel
+      - run:
+          name: Upload to pypi
+          command: |
+            twine upload dist/*
+
 workflows:
   version: 2
   default:
     jobs:
       #- run-solium
-      - install
+      - install:
+          filters:
+            <<: *tagged-filter
       - run-flake8:
+          filters:
+            <<: *tagged-filter
           requires:
             - install
       - run-black:
+          filters:
+            <<: *tagged-filter
           requires:
             - install
       - run-pytest:
+          filters:
+            <<: *tagged-filter
           requires:
             - install
       - run-mypy:
+          filters:
+            <<: *tagged-filter
           requires:
             - install
+      - upload-pypi:
+          context: pypi-credentials
+          requires:
+            - run-flake8
+            - run-black
+            - run-pytest
+            - run-mypy
+            - install
+          filters:
+            <<: *tagged-filter
+            branches:
+              ignore: /.*/
