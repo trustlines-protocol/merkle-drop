@@ -1,6 +1,11 @@
 # Trustlines Merkle-Drop
 
-## Installation
+## Installation via PyPI
+
+Please run `pip install merkle-drop` in fresh virtualenv using at
+least python 3.6.
+
+## Installation from git checkout
 
 Please make sure you have the following requirements installed:
 
