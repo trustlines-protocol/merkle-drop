@@ -49,7 +49,7 @@ The best way to start the backend server is to use gunicorn as a WSGI-container:
 gunicorn -c config.py merkle_drop.server:app
 ```
 
-The following config is suitable for the trustline foundations
+The following config is suitable for the Trustlines Foundations
 currently active [Merkle Drop Token
 Claim](https://trustlines.foundation/merkle-drop.html).
 
