@@ -8,7 +8,7 @@ templates:
 executors:
   ubuntu-builder:
     docker:
-      - image: trustlines/builder:master27
+      - image: trustlines/builder:master61
         environment:
           - SOLC_VERSION=v0.5.8
     working_directory: ~/repo
@@ -22,7 +22,7 @@ commands:
       - run:
           name: Create python venv
           command: |
-            python3 -m venv venv
+            python3.8 -m venv venv
             venv/bin/pip install -c constraints.txt pip wheel setuptools
 
   config-path:
@@ -31,7 +31,7 @@ commands:
     - run:
         name: Configuring PATH
         command: |
-          echo 'export PATH=~/bin:~/opt/node/bin:~/repo/venv/bin:${PATH}; . ~/.nvm/nvm.sh' >> ${BASH_ENV}
+          echo 'export PATH=~/bin:~/opt/node/bin:~/repo/venv/bin:~/.cargo/bin:${PATH}; . ~/.nvm/nvm.sh' >> ${BASH_ENV}
 
 jobs:
   run-flake8:
@@ -104,6 +104,18 @@ jobs:
           paths:
             - repo
 
+  install-py39:
+    executor: ubuntu-builder
+    steps:
+      - checkout
+      - config-path
+      - create-venv
+      - run:
+          name: Install with python 3.9
+          command: |
+            pip install tox
+            tox -vv -e py39
+
   run-pytest:
     executor: ubuntu-builder
     steps:
@@ -160,8 +172,10 @@ workflows:
   version: 2
   default:
     jobs:
-      #- run-solium
       - install:
+          filters:
+            <<: *tagged-filter
+      - install-py39:
           filters:
             <<: *tagged-filter
       - run-flake8:

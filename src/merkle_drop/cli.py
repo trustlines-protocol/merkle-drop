@@ -95,7 +95,7 @@ def proof(address: bytes, airdrop_file_name: str) -> None:
         )
         click.echo(" ".join(encode_hex(hash_) for hash_ in proof))
     except KeyError as e:
-        raise click.BadParameter(f"The address is not eligible to get a proof") from e
+        raise click.BadParameter("The address is not eligible to get a proof") from e
 
 
 @main.command(short_help="Deploy the MerkleDrop contract")
@@ -159,11 +159,11 @@ def deploy(
 
     if decay_start_date is not None and decay_start_time is not None:
         raise click.BadParameter(
-            f"Both --decay-start-date and --decay-start-time have been specified"
+            "Both --decay-start-date and --decay-start-time have been specified"
         )
     if decay_start_date is None and decay_start_time is None:
         raise click.BadParameter(
-            f"Please specify a decay start date with --decay-start-date or --decay-start-time"
+            "Please specify a decay start date with --decay-start-date or --decay-start-time"
         )
 
     if decay_start_date is not None:
