@@ -28,13 +28,12 @@ def init_gunicorn_logging():
 def init_cors(**kwargs):
     """enable CORS
 
-see https://flask-cors.corydolphin.com/en/latest/api.html#extension
-for allowed kwargs
+    see https://flask-cors.corydolphin.com/en/latest/api.html#extension
+    for allowed kwargs
 
-The default is to allow '*', but one can pass
-e.g. origins='http://example.com' to allow request from one domain
-only."
-"""
+    The default is to allow '*', but one can pass
+    e.g. origins='http://example.com' to allow request from one domain
+    only." """
     CORS(app=app, **kwargs)
 
 
