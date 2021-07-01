@@ -99,6 +99,12 @@ jobs:
           name: Verify installed packages have compatible dependencies
           command: |
             pip check
+      - run:
+          name: Build sdist and wheel
+          command: |
+            make compile
+            python setup.py sdist
+            python setup.py bdist_wheel
       - persist_to_workspace:
           root: "~"
           paths:
@@ -145,6 +151,17 @@ jobs:
           command: |
             mypy --ignore-missing-imports src tests
 
+  check-dist:
+    executor: ubuntu-builder
+    steps:
+      - attach_workspace:
+          at: '~'
+      - config-path
+      - run:
+          name: Twine check
+          command: |
+            twine check dist/*
+
   upload-pypi:
     executor: ubuntu-builder
     steps:
@@ -157,12 +174,6 @@ jobs:
             echo -e "[pypi]" >> ~/.pypirc
             echo -e "username = $PYPI_USER" >> ~/.pypirc
             echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
-      - run:
-          name: Build sdist and wheel
-          command: |
-            make compile
-            python setup.py sdist
-            python setup.py bdist_wheel
       - run:
           name: Upload to pypi
           command: |
